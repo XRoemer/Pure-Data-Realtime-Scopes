@@ -5,16 +5,24 @@
 """
 Dieses Skript ersetzt Schriftarten und Schriftgrößen von mehreren Zeichenstilen gleichzeitig 
  
-Instruktionen:
+Installation:
 Dieses Skript als change_fonts.py in den scribus Skriptordner kopieren
 ( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
 Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
 man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
 
+Variante 1
 Skript in Scribus starten und Font und Schriftgröße wählen. Den Button unter 
 neue Schriftart klicken, um gewünschte Änderungen für den entsprechenden Stil einzutragen.
 Mit dem Startbutton werden die Änderungen übernommen. Die Änderungen werden erst
 nach dem Schließen des Skriptfensters sichtbar.
+
+Variante 2:
+Skript mit "Skript ausführen" starten und "Als Erweiterungsskript ausführen" aktivieren.
+in Zeile 174 bei scribus.redrawAll() das "#" entfernen.
+Wenn der Start Button im Skriptfenster betätigt wird, werden Änderungen sofort
+sichtbar. Das Skript muß nicht geschlossen und wieder geöffnet werden, allerdings
+läuft es instabiler und kann Scribus evt. zum Absturz bringen.
  
  
 ********** WARNUNG *************
@@ -33,17 +41,17 @@ scribus.createCharStyle(name=stil ...) nicht mit unicode gesetzt werden.
 
 
 
-# platform = sys.platform
-#         
-# def pydevBrk():  
-#     # adjust your path 
-#     if platform == 'linux':
-#         sys.path.append('/opt/eclipse/plugins/org.python.pydev_3.8.0.201409251235/pysrc')  
-#     else:
-#         sys.path.append(r'H:/Programme/eclipse/plugins/org.python.pydev_3.5.0.201405201709/pysrc')  
-#     from pydevd import settrace
-#     settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True) 
-# pd = pydevBrk 
+platform = sys.platform
+         
+def pydevBrk():  
+    # adjust your path 
+    if platform == 'linux':
+        sys.path.append('/opt/eclipse/plugins/org.python.pydev_3.8.0.201409251235/pysrc')  
+    else:
+        sys.path.append(r'H:/Programme/eclipse/plugins/org.python.pydev_3.5.0.201405201709/pysrc')  
+    from pydevd import settrace
+    settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True) 
+pd = pydevBrk 
 
 
  
@@ -167,7 +175,8 @@ class Exchange(Frame):
                     #scribus.createCharStyle(**self.style_info[stil])
                     
                     scribus.createCharStyle(name=stil,font=neue_schriftart,fontsize=size)
-       
+                    #scribus.redrawAll()
+                    
        
     def test(self,**args):
         print(args)
