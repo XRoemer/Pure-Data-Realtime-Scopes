@@ -3,12 +3,18 @@
 # This version 27.3.2015
 
 """
-Dieses Skript ersetzt Schriftart und Schriftgröße von Zeichenstilen
+Dieses Skript ersetzt Schriftarten und Schriftgrößen von mehreren Zeichenstilen gleichzeitig 
  
 Instruktionen:
-Skript starten und Font und Schriftgröße wählen. Den Button unter 
-neue Schriftart klicken, um Änderungen einzutragen.
-Mit dem Startbutton werden die Änderungen übernommen
+Dieses Skript als change_fonts.py in den scribus Skriptordner kopieren
+( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
+Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
+man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
+
+Skript in Scribus starten und Font und Schriftgröße wählen. Den Button unter 
+neue Schriftart klicken, um gewünschte Änderungen für den entsprechenden Stil einzutragen.
+Mit dem Startbutton werden die Änderungen übernommen. Die Änderungen werden erst
+nach dem Schließen des Skriptfensters sichtbar.
  
  
 ********** WARNUNG *************
@@ -18,7 +24,7 @@ und dergleichen gehen verloren. Der Versuch, auch diese Einstellungen zu überneh
 wurde unternommen (Zeilen 128ff und 226ff), funktioniert aber noch nicht. Wahrscheinlich liegt es 
 an der Formatierung der Werte (String,Int,Float)
 
-Stile mit Umlauten im Namen können ebenfalls nicht geändert werden. Der Versuch führt
+Stile mit Umlauten im Namen können nicht geändert werden. Der Versuch führt
 zu neuen Stileinträgen mit unicode Zeichen. Das Attribut 'name' kann in:
 scribus.createCharStyle(name=stil ...) nicht mit unicode gesetzt werden.
 
