@@ -18,8 +18,8 @@ Mit dem Startbutton werden die Änderungen übernommen. Die Änderungen werden erst
 nach dem Schließen des Skriptfensters sichtbar.
 
 Variante 2:
+In Zeile 174 bei scribus.redrawAll() das "#" entfernen.
 Skript mit "Skript ausführen" starten und "Als Erweiterungsskript ausführen" aktivieren.
-in Zeile 174 bei scribus.redrawAll() das "#" entfernen.
 Wenn der Start Button im Skriptfenster betätigt wird, werden Änderungen sofort
 sichtbar. Das Skript muß nicht geschlossen und wieder geöffnet werden, allerdings
 läuft es instabiler und kann Scribus evt. zum Absturz bringen.
