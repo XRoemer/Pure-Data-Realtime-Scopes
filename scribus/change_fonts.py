@@ -18,7 +18,8 @@ Mit dem Startbutton werden die Änderungen übernommen. Die Änderungen werden erst
 nach dem Schließen des Skriptfensters sichtbar.
 
 Variante 2:
-In Zeile 174 bei scribus.redrawAll() das "#" entfernen.
+In Zeile 178 bei scribus.redrawAll() das "#" entfernen.
+In den allgemeinen Einstellungen unter Scripter das Häkchen bei "Erweiterungsscripte aktivieren" setzen.
 Skript mit "Skript ausführen" starten und "Als Erweiterungsskript ausführen" aktivieren.
 Wenn der Start Button im Skriptfenster betätigt wird, werden Änderungen sofort
 sichtbar. Das Skript muß nicht geschlossen und wieder geöffnet werden, allerdings
@@ -52,19 +53,30 @@ def pydevBrk():
     from pydevd import settrace
     settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True) 
 pd = pydevBrk 
-
+#pd()
 
  
 import scribus
 from functools import partial
+import StringIO
+
+
+try:
+    from PIL import Image as ImagePIL
+    from PIL import ImageFont,ImageDraw
+except ImportError:
+    print "This script requires Python27 and PIL installed on your system."
+    scribus.messageBox('Script failed',
+               'This script requires Python27 and PIL installed on your system.',
+               scribus.ICON_CRITICAL)
+    sys.exit(1)
 
 try:
     from Tkinter import *
-    from tkFont import Font
 except ImportError:
-    print "This script requires Python's Tkinter properly installed."
+    print "This script requires Python27 and Tkinter installed on your system."
     scribus.messageBox('Script failed',
-               'This script requires Python\'s Tkinter properly installed.',
+               'This script requires Python27 and Tkinter installed on your system.',
                scribus.ICON_CRITICAL)
     sys.exit(1)
  
@@ -77,15 +89,16 @@ class Exchange(Frame):
 
         Frame.__init__(self, master)
         self.grid()
-        self.master.geometry('750x730')
+        self.master.geometry('950x730')
         self.master.title('Ersetze Stile')
 
         
         self.styles = self.get_styles()
 
-        self.xfonts = self.get_font_styles()
+        self.xfonts,self.xfonts_pfade = self.get_font_styles()
         
         self.btn_schnitte = []
+        self.beispieltext = ''
         
         self.columnconfigure(5,weight = 1)
         
@@ -151,7 +164,45 @@ class Exchange(Frame):
                 
         btn = Button(self, text = 'Start',width ='20',command=self.aendere_stile)
         btn.grid(column=1, row=400 ,pady=1,padx=5)
+
+    
         
+    def erstelle_beispieltext(self,text):
+  
+        W, H = (1500,100)
+        
+        if self.beispieltext != '':
+            self.beispieltext.grid_forget()
+        
+        image = ImagePIL.new("RGBA", (W,H), (255,255,255))
+
+        usr_font = ImageFont.truetype(self.xfonts_pfade[text.strip()], 18)
+        msg = 'Beispieltext für Schrifttype:'
+        msg2 = text
+        draw = ImageDraw.Draw(image)
+
+        draw.text( (5,0) , msg, (0,0,0), font=usr_font)
+        w, h = draw.textsize(msg,font=usr_font)
+        
+        draw.text( (5,h) , msg2, (0,0,0), font=usr_font)
+        w2, h2 = draw.textsize(msg2,font=usr_font)
+        
+        wmax = max(w,w2)
+
+        image.size = (wmax+10,h+h2+5)
+        
+        # StringIO
+        output = StringIO.StringIO()
+        image.save(output, format="GIF")
+        contents = output.getvalue()
+        output.close()
+        
+        photo = PhotoImage(data=contents)
+        self.beispieltext = Label(self, image=photo,width =W)
+        self.beispieltext.grid(column=6, row=30)
+        self.beispieltext.image = photo
+
+   
  
     def alignImage(self):        
         self.master.destroy()
@@ -175,7 +226,7 @@ class Exchange(Frame):
                     #scribus.createCharStyle(**self.style_info[stil])
                     
                     scribus.createCharStyle(name=stil,font=neue_schriftart,fontsize=size)
-                    #scribus.redrawAll()
+                    scribus.redrawAll()
                     
        
     def test(self,**args):
@@ -191,10 +242,11 @@ class Exchange(Frame):
 
         self.neue_schrift[ev].set(schnitt)
         self.neue_schrift[str(ev)+'fs'].set( self.var_fs.get())
-        
+
         
     def setze_schnitt(self,ev):
         self.selektierter_schnitt.set(ev)
+        self.erstelle_beispieltext(ev[0])
         
         
     def setze_familie_und_schnitt(self,*ev):
@@ -209,11 +261,11 @@ class Exchange(Frame):
         if selek == 'KEINE AENDERUNG':
             self.selektierter_schnitt.set("['KEINE AENDERUNG'")
         
-        elif selek != 'KEINE AENDERUNG':
+        else:
             
             schriftarten = self.xfonts[selek]
             
-            currRow = 5
+            currRow = 5 + 50
             for s in schriftarten:
                 radio_btn = Radiobutton(self,
                                         value=currRow,
@@ -234,6 +286,8 @@ class Exchange(Frame):
                 
             self.btn_schnitte[0][0].select()
             self.selektierter_schnitt.set(schriftarten[0])
+
+            self.erstelle_beispieltext(schriftarten[0][0])
             
 
     def get_styles(self):
@@ -296,8 +350,9 @@ class Exchange(Frame):
     def get_font_styles(self):
         
         xfonts = scribus.getXFontNames()
-
+        
         fam = {}
+        fonts_pfade = {}
         for f in xfonts:
             
             schnitt =  f[2].split('-')
@@ -310,8 +365,9 @@ class Exchange(Frame):
                 fam.update( { f[1] : [ (f[0],schnitt) ] } )
             else:
                 fam[f[1]].append( (f[0],schnitt) )
-                
-        return fam
+
+            fonts_pfade.update( {f[0].strip(): f[-1]} )
+        return fam,fonts_pfade
         
         
  
