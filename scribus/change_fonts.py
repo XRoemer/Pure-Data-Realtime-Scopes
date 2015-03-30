@@ -3,47 +3,47 @@
 # This version 27.3.2015
 
 """
-Dieses Skript ersetzt Schriftarten und Schriftgrößen von mehreren Zeichenstilen gleichzeitig 
+Dieses Skript ersetzt Schriftarten und SchriftgrÃ¶ÃŸen von mehreren Zeichenstilen gleichzeitig 
  
 
-Systemvorraussetzungen:
+Systemvoraussetzungen:
 Ein auf dem System installiertes Python 2.7 mit PIL und Tkinter
 
 
 Installation:
-Dieses Skript unter einem frei wählbaren Namen mit der Endung .py 
+Dieses Skript unter einem frei wÃ¤hlbaren Namen mit der Endung .py 
 (z.B. change_fonts.py) in einem Ordner erstellen.
 ( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
 Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
-man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
+man im Windows Editor neben dem Speicher-Button die Codierung auswÃ¤hlen. -> UTF-8)
 
-In den allgemeinen Einstellungen unter Scripter das Häkchen bei "Erweiterungsscripte aktivieren" setzen.
-Skript mit "Script/Skript ausführen ..." starten und "Als Erweiterungsskript ausführen" aktivieren.
+In den allgemeinen Einstellungen unter Scripter das HÃ¤kchen bei "Erweiterungsscripte aktivieren" setzen.
+Skript mit "Script/Skript ausfÃ¼hren ..." starten und "Als Erweiterungsskript ausfÃ¼hren" aktivieren.
 
 Ansicht:
-Spalte 1: die Zeichenstile des geöffneten Dokuments. 
-Spalte 2: neue Schriftart für den Zeichenstil
-Spalte 3: neue Schriftgröße für den Zeichenstil (zeigt initial die Schriftgröße des Zeichenstils an. Mit Auswahl einer neuen
-                                                Schrift zeigt es die Schriftgröße, in die geändert wird, an.)
-Spalte 4: für Scribus erreichbare Schriftfamilien
-Spalte 5: Schriftgröße und Schnitt
-Spalte 6: Beispieltext in der ausgewählten Schriftart
+Spalte 1: die Zeichenstile des geÃ¶ffneten Dokuments. 
+Spalte 2: neue Schriftart fÃ¼r den Zeichenstil
+Spalte 3: neue SchriftgrÃ¶ÃŸe fÃ¼r den Zeichenstil (zeigt initial die SchriftgrÃ¶ÃŸe des Zeichenstils an. Mit Auswahl einer neuen
+                                                Schrift zeigt es die SchriftgrÃ¶ÃŸe, in die geÃ¤ndert wird, an.)
+Spalte 4: fÃ¼r Scribus erreichbare Schriftfamilien
+Spalte 5: SchriftgrÃ¶ÃŸe und Schnitt
+Spalte 6: Beispieltext in der ausgewÃ¤hlten Schriftart
 
 Gebrauch:
-Schriftfamilie, -schnitt und -größe auswählen. Mit Klick auf den Button in Spalte 2
-wird die Auswahl für den Stil übernommen. 
-Zum Ändern der Schriftart, Start Button klicken. Änderungen werden sofort sichtbar. 
+Schriftfamilie, -schnitt und -grÃ¶ÃŸe auswÃ¤hlen. Mit Klick auf den Button in Spalte 2
+wird die Auswahl fÃ¼r den Stil Ã¼bernommen. 
+Zum Ã„ndern der Schriftart, Start Button klicken. Ã„nderungen werden sofort sichtbar. 
  
  
 ********** WARNUNG *************
 
-Dieses Skript überschreibt den vorhandenen Stil. Änderungen in der Laufweite
-und dergleichen gehen verloren. Der Versuch, auch diese Einstellungen zu übernehmen,
+Dieses Skript Ã¼berschreibt den vorhandenen Stil. Ã„nderungen in der Laufweite
+und dergleichen gehen verloren. Der Versuch, auch diese Einstellungen zu Ã¼bernehmen,
 wurde unternommen (Zeilen 128ff und 226ff), funktioniert aber noch nicht. Wahrscheinlich liegt es 
 an der Formatierung der Werte (String,Int,Float)
 
-Stile mit Umlauten im Namen können nicht geändert werden. Der Versuch führt
-zu neuen Stileinträgen mit unicode Zeichen. Das Attribut 'name' kann in:
+Stile mit Umlauten im Namen kÃ¶nnen nicht geÃ¤ndert werden. Der Versuch fÃ¼hrt
+zu neuen StileintrÃ¤gen mit unicode Zeichen. Das Attribut 'name' kann in:
 scribus.createCharStyle(name=stil ...) nicht mit unicode gesetzt werden.
 
  
@@ -197,7 +197,7 @@ class Exchange(Frame):
         image = ImagePIL.new("RGBA", (W,H), (255,255,255))
 
         usr_font = ImageFont.truetype(self.xfonts_pfade[text.strip()], int(self.var_fs.get() ) )
-        msg = 'Beispieltext für Schrifttype:'
+        msg = 'Beispieltext fÃ¼r Schrifttype:'
         msg2 = text + ' {}pt'.format(self.var_fs.get())
         draw = ImageDraw.Draw(image)
 
