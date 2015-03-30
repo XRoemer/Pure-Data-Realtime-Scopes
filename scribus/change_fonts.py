@@ -5,25 +5,34 @@
 """
 Dieses Skript ersetzt Schriftarten und Schriftgrößen von mehreren Zeichenstilen gleichzeitig 
  
+
+Systemvorraussetzungen:
+Ein auf dem System installiertes Python 2.7 mit PIL und Tkinter
+
+
 Installation:
-Dieses Skript als change_fonts.py in den scribus Skriptordner kopieren
+Dieses Skript unter einem frei wählbaren Namen mit der Endung .py 
+(z.B. change_fonts.py) in einem Ordner erstellen.
 ( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
 Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
 man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
 
-Variante 1
-Skript in Scribus starten und Font und Schriftgröße wählen. Den Button unter 
-neue Schriftart klicken, um gewünschte Änderungen für den entsprechenden Stil einzutragen.
-Mit dem Startbutton werden die Änderungen übernommen. Die Änderungen werden erst
-nach dem Schließen des Skriptfensters sichtbar.
-
-Variante 2:
-In Zeile 178 bei scribus.redrawAll() das "#" entfernen.
 In den allgemeinen Einstellungen unter Scripter das Häkchen bei "Erweiterungsscripte aktivieren" setzen.
-Skript mit "Skript ausführen" starten und "Als Erweiterungsskript ausführen" aktivieren.
-Wenn der Start Button im Skriptfenster betätigt wird, werden Änderungen sofort
-sichtbar. Das Skript muß nicht geschlossen und wieder geöffnet werden, allerdings
-läuft es instabiler und kann Scribus evt. zum Absturz bringen.
+Skript mit "Script/Skript ausführen ..." starten und "Als Erweiterungsskript ausführen" aktivieren.
+
+Ansicht:
+Spalte 1: die Zeichenstile des geöffneten Dokuments. 
+Spalte 2: neue Schriftart für den Zeichenstil
+Spalte 3: neue Schriftgröße für den Zeichenstil (zeigt initial die Schriftgröße des Zeichenstils an. Mit Auswahl einer neuen
+                                                Schrift zeigt es die Schriftgröße, in die geändert wird, an.)
+Spalte 4: für Scribus erreichbare Schriftfamilien
+Spalte 5: Schriftgröße und Schnitt
+Spalte 6: Beispieltext in der ausgewählten Schriftart
+
+Gebrauch:
+Schriftfamilie, -schnitt und -größe auswählen. Mit Klick auf den Button in Spalte 2
+wird die Auswahl für den Stil übernommen. 
+Zum Ändern der Schriftart, Start Button klicken. Änderungen werden sofort sichtbar. 
  
  
 ********** WARNUNG *************
@@ -60,23 +69,31 @@ import scribus
 from functools import partial
 import StringIO
 
+try:
+    from xml.etree import ElementTree as et
+except ImportError:
+    print "This script requires Python27 installed on your system."
+    scribus.messageBox('Script failed',
+               'This script requires Python27 installed on your system.',
+               scribus.ICON_CRITICAL)
+    sys.exit(1)
 
 try:
     from PIL import Image as ImagePIL
     from PIL import ImageFont,ImageDraw
 except ImportError:
-    print "This script requires Python27 and PIL installed on your system."
+    print "This script requires PIL installed with your python installation."
     scribus.messageBox('Script failed',
-               'This script requires Python27 and PIL installed on your system.',
+               'This script requires PIL with your python installation.',
                scribus.ICON_CRITICAL)
     sys.exit(1)
 
 try:
     from Tkinter import *
 except ImportError:
-    print "This script requires Python27 and Tkinter installed on your system."
+    print "This script requires Tkinter installed with your python installation."
     scribus.messageBox('Script failed',
-               'This script requires Python27 and Tkinter installed on your system.',
+               'This script requires Tkinter installed with your python installation.',
                scribus.ICON_CRITICAL)
     sys.exit(1)
  
@@ -113,7 +130,7 @@ class Exchange(Frame):
         
         self.neue_schrift = {}
         currRow = 1
-        
+
         for f in range(len(self.styles)):
             
             var = StringVar(master)  
@@ -121,7 +138,11 @@ class Exchange(Frame):
             self.neue_schrift.update({currRow:var})
             
             var = StringVar(master)  
-            var.set('12')
+            try:
+                var.set(self.style_info[self.styles[f].strip()]['fontsize'])
+            except:
+                var.set('12')
+                
             self.neue_schrift.update({str(currRow)+'fs':var})
             
             sty = self.styles[f] 
@@ -133,7 +154,6 @@ class Exchange(Frame):
             n_stil_btn = Button(self, textvariable=self.neue_schrift[currRow],
                                 width ='20',
                                 command=partial(self.uebernehme_stil,currRow)
-                                
                                 )
             n_stil_btn.grid(column=1, row=currRow,sticky=N,pady=1,padx=5)
             
@@ -176,9 +196,9 @@ class Exchange(Frame):
         
         image = ImagePIL.new("RGBA", (W,H), (255,255,255))
 
-        usr_font = ImageFont.truetype(self.xfonts_pfade[text.strip()], 18)
+        usr_font = ImageFont.truetype(self.xfonts_pfade[text.strip()], int(self.var_fs.get() ) )
         msg = 'Beispieltext für Schrifttype:'
-        msg2 = text
+        msg2 = text + ' {}pt'.format(self.var_fs.get())
         draw = ImageDraw.Draw(image)
 
         draw.text( (5,0) , msg, (0,0,0), font=usr_font)
@@ -292,7 +312,7 @@ class Exchange(Frame):
 
     def get_styles(self):
         
-        from xml.etree import ElementTree as et
+        
         
         path = scribus.getDocName()
         xml_tree = et.parse(path)
@@ -342,7 +362,7 @@ class Exchange(Frame):
                     
                     d_dic.update({fx[0]:val})
                 
-            self.style_info.update({e.attrib['CNAME']:d_dic})
+            self.style_info.update({e.attrib['CNAME'].strip():d_dic})
                 
         return styles
         
