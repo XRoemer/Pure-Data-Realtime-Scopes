@@ -1,3 +1,3 @@
 # Diverse
 
-# dem Namen entsprechend
+dem Namen entsprechend

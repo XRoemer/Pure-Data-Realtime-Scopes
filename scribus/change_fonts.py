@@ -11,11 +11,8 @@ Ein auf dem System installiertes Python 2.7 mit PIL und Tkinter
 
 
 Installation:
-Dieses Skript unter einem frei wählbaren Namen mit der Endung .py 
-(z.B. change_fonts.py) in einem Ordner erstellen.
+Dieses Skript in einem Ordner speichern.
 ( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
-Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
-man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
 
 Windows:
 Die beiden .egg Dateien "Pillow-2.7.0-py2.7-win-amd64.egg" und "setuptools-14.3.1-py2.7.egg"
@@ -84,11 +81,11 @@ def module_path(local_function):
 
 path_to_script_dir = module_path(module_path)
 
-
-path = os.path.join(path_to_script_dir,'setuptools-14.3.1-py2.7.egg')
-sys.path.append(path)
-path = os.path.join(path_to_script_dir,'Pillow-2.7.0-py2.7-win-amd64.egg')
-sys.path.append(path)
+if platform == 'win32':
+    path = os.path.join(path_to_script_dir,'setuptools-14.3.1-py2.7.egg')
+    sys.path.append(path)
+    path = os.path.join(path_to_script_dir,'Pillow-2.7.0-py2.7-win-amd64.egg')
+    sys.path.append(path)
 
  
 import scribus
