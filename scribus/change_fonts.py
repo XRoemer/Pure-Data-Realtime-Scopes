@@ -3,54 +3,61 @@
 # This version 27.3.2015
 
 """
-Dieses Skript ersetzt Schriftarten und SchriftgrÃ¶ÃŸen von mehreren Zeichenstilen gleichzeitig 
+Dieses Skript ersetzt Schriftarten und Schriftgrößen von mehreren Zeichenstilen gleichzeitig 
  
 
-Systemvoraussetzungen:
+Systemvorraussetzungen für Linux:
 Ein auf dem System installiertes Python 2.7 mit PIL und Tkinter
 
 
 Installation:
-Dieses Skript unter einem frei wÃ¤hlbaren Namen mit der Endung .py 
+Dieses Skript unter einem frei wählbaren Namen mit der Endung .py 
 (z.B. change_fonts.py) in einem Ordner erstellen.
 ( in Win7 z.B. C:\Program Files\Scribus 1.4.5\share\scripts)
 Das Skript muss als utf-8 codiert sein. (Beim Speichern mit dem Editor kann
-man im Windows Editor neben dem Speicher-Button die Codierung auswÃ¤hlen. -> UTF-8)
+man im Windows Editor neben dem Speicher-Button die Codierung auswählen. -> UTF-8)
 
-In den allgemeinen Einstellungen unter Scripter das HÃ¤kchen bei "Erweiterungsscripte aktivieren" setzen.
-Skript mit "Script/Skript ausfÃ¼hren ..." starten und "Als Erweiterungsskript ausfÃ¼hren" aktivieren.
+Windows:
+Die beiden .egg Dateien "Pillow-2.7.0-py2.7-win-amd64.egg" und "setuptools-14.3.1-py2.7.egg"
+in den gleichen Ordner kopieren.
+
+Linux:
+PIL und gegebenenfalls Tkinter für Python 2.7 installieren.
+
+
+In den allgemeinen Einstellungen unter Scripter das Häkchen bei "Erweiterungsscripte aktivieren" setzen.
+Skript mit "Script/Skript ausführen ..." starten und "Als Erweiterungsskript ausführen" aktivieren.
 
 Ansicht:
-Spalte 1: die Zeichenstile des geÃ¶ffneten Dokuments. 
-Spalte 2: neue Schriftart fÃ¼r den Zeichenstil
-Spalte 3: neue SchriftgrÃ¶ÃŸe fÃ¼r den Zeichenstil (zeigt initial die SchriftgrÃ¶ÃŸe des Zeichenstils an. Mit Auswahl einer neuen
-                                                Schrift zeigt es die SchriftgrÃ¶ÃŸe, in die geÃ¤ndert wird, an.)
-Spalte 4: fÃ¼r Scribus erreichbare Schriftfamilien
-Spalte 5: SchriftgrÃ¶ÃŸe und Schnitt
-Spalte 6: Beispieltext in der ausgewÃ¤hlten Schriftart
+Spalte 1: die Zeichenstile des geöffneten Dokuments. 
+Spalte 2: neue Schriftart für den Zeichenstil
+Spalte 3: neue Schriftgröße für den Zeichenstil (zeigt initial die Schriftgröße des Zeichenstils an. Mit Auswahl einer neuen
+                                                Schrift zeigt es die Schriftgröße, in die geändert wird, an.)
+Spalte 4: für Scribus erreichbare Schriftfamilien
+Spalte 5: Schriftgröße und Schnitt
+Spalte 6: Beispieltext in der ausgewählten Schriftart
 
 Gebrauch:
-Schriftfamilie, -schnitt und -grÃ¶ÃŸe auswÃ¤hlen. Mit Klick auf den Button in Spalte 2
-wird die Auswahl fÃ¼r den Stil Ã¼bernommen. 
-Zum Ã„ndern der Schriftart, Start Button klicken. Ã„nderungen werden sofort sichtbar. 
+Schriftfamilie, -schnitt und -größe auswählen. Mit Klick auf den Button in Spalte 2
+wird die Auswahl für den Stil übernommen. 
+Zum Ändern der Schriftart, Start Button klicken. Änderungen werden sofort sichtbar. 
  
  
 ********** WARNUNG *************
 
-Dieses Skript Ã¼berschreibt den vorhandenen Stil. Ã„nderungen in der Laufweite
-und dergleichen gehen verloren. Der Versuch, auch diese Einstellungen zu Ã¼bernehmen,
+Dieses Skript überschreibt den vorhandenen Stil. Änderungen in der Laufweite
+und dergleichen gehen verloren. Der Versuch, auch diese Einstellungen zu übernehmen,
 wurde unternommen (Zeilen 128ff und 226ff), funktioniert aber noch nicht. Wahrscheinlich liegt es 
 an der Formatierung der Werte (String,Int,Float)
 
-Stile mit Umlauten im Namen kÃ¶nnen nicht geÃ¤ndert werden. Der Versuch fÃ¼hrt
-zu neuen StileintrÃ¤gen mit unicode Zeichen. Das Attribut 'name' kann in:
+Stile mit Umlauten im Namen können nicht geändert werden. Der Versuch führt
+zu neuen Stileinträgen mit unicode Zeichen. Das Attribut 'name' kann in:
 scribus.createCharStyle(name=stil ...) nicht mit unicode gesetzt werden.
 
  
 """
 
-
-
+#####  DEBUGGING ##########
 platform = sys.platform
          
 def pydevBrk():  
@@ -62,42 +69,51 @@ def pydevBrk():
     from pydevd import settrace
     settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True) 
 pd = pydevBrk 
-#pd()
+#####  DEBUGGING END ##########
+
+
+
+
+
+def module_path(local_function):
+    ''' returns the module path without the use of __file__.  Requires a function defined 
+    locally in the module.
+    from http://stackoverflow.com/questions/729583/getting-file-path-of-imported-module'''
+    import inspect
+    return os.path.split(os.path.abspath(inspect.getsourcefile(local_function)))[0]
+
+path_to_script_dir = module_path(module_path)
+
+
+path = os.path.join(path_to_script_dir,'setuptools-14.3.1-py2.7.egg')
+sys.path.append(path)
+path = os.path.join(path_to_script_dir,'Pillow-2.7.0-py2.7-win-amd64.egg')
+sys.path.append(path)
 
  
 import scribus
 from functools import partial
 import StringIO
+from xml.etree import ElementTree as et
 
-try:
-    from xml.etree import ElementTree as et
-except ImportError:
-    print "This script requires Python27 installed on your system."
-    scribus.messageBox('Script failed',
-               'This script requires Python27 installed on your system.',
-               scribus.ICON_CRITICAL)
-    sys.exit(1)
+from Tkinter import *
 
 try:
     from PIL import Image as ImagePIL
     from PIL import ImageFont,ImageDraw
-except ImportError:
+    from PIL.ImageTk import PhotoImage 
+except:
     print "This script requires PIL installed with your python installation."
     scribus.messageBox('Script failed',
                'This script requires PIL with your python installation.',
                scribus.ICON_CRITICAL)
     sys.exit(1)
 
-try:
-    from Tkinter import *
-except ImportError:
-    print "This script requires Tkinter installed with your python installation."
-    scribus.messageBox('Script failed',
-               'This script requires Tkinter installed with your python installation.',
-               scribus.ICON_CRITICAL)
-    sys.exit(1)
+
+
+
  
- 
+
  
 class Exchange(Frame):
     """ GUI interface for exchanging a charstyle """
@@ -189,15 +205,16 @@ class Exchange(Frame):
         
     def erstelle_beispieltext(self,text):
   
-        W, H = (1500,100)
+        W, H = (1500,200)
         
         if self.beispieltext != '':
             self.beispieltext.grid_forget()
         
+        
         image = ImagePIL.new("RGBA", (W,H), (255,255,255))
 
         usr_font = ImageFont.truetype(self.xfonts_pfade[text.strip()], int(self.var_fs.get() ) )
-        msg = 'Beispieltext fÃ¼r Schrifttype:'
+        msg = 'Beispieltext für Schrifttype:'
         msg2 = text + ' {}pt'.format(self.var_fs.get())
         draw = ImageDraw.Draw(image)
 
@@ -207,19 +224,19 @@ class Exchange(Frame):
         draw.text( (5,h) , msg2, (0,0,0), font=usr_font)
         w2, h2 = draw.textsize(msg2,font=usr_font)
         
-        wmax = max(w,w2)
-
-        image.size = (wmax+10,h+h2+5)
+        w3 = max(w,w2) + 10
+        h3 = h + h2 +5
+        im = image.crop((0,0,w3,h3))
         
         # StringIO
         output = StringIO.StringIO()
-        image.save(output, format="GIF")
+        im.save(output, format="GIF")
         contents = output.getvalue()
         output.close()
-        
+
         photo = PhotoImage(data=contents)
-        self.beispieltext = Label(self, image=photo,width =W)
-        self.beispieltext.grid(column=6, row=30)
+        self.beispieltext = Button(self, image=photo,width = w3,height = h3)
+        self.beispieltext.grid(column=6, row=1,rowspan= 10)
         self.beispieltext.image = photo
 
    
@@ -286,6 +303,9 @@ class Exchange(Frame):
             schriftarten = self.xfonts[selek]
             
             currRow = 5 + 50
+            zaehler = 0
+            regular = 0
+            
             for s in schriftarten:
                 radio_btn = Radiobutton(self,
                                         value=currRow,
@@ -302,12 +322,17 @@ class Exchange(Frame):
                 label.grid(column=6, row=currRow,sticky=W)
                 
                 self.btn_schnitte.append((radio_btn,label))
-                currRow += 1
+                if s[1].lower() in ['regular','reg']:
+                    regular = zaehler
                 
-            self.btn_schnitte[0][0].select()
-            self.selektierter_schnitt.set(schriftarten[0])
+                currRow += 1
+                zaehler += 1
+            
+               
+            self.btn_schnitte[regular][0].select()
+            self.selektierter_schnitt.set(schriftarten[regular])
 
-            self.erstelle_beispieltext(schriftarten[0][0])
+            self.erstelle_beispieltext(schriftarten[regular][0])
             
 
     def get_styles(self):
