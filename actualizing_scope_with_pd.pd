@@ -1,0 +1,56 @@
+#N canvas 746 313 513 384 10;
+#X obj 358 48 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 359 101 f;
+#X obj 404 101 + 1;
+#X floatatom 359 145 5 0 0 0 - - -, f 5;
+#X obj 324 193 snapshot~;
+#X obj 358 68 metro 1;
+#X obj 359 123 mod 4000;
+#X msg 140 44 0;
+#X obj 235 44 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 139 221 dac~;
+#X obj 139 175 *~;
+#X obj 64 23 vsl 30 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 8400 1;
+#X obj 200 300 table graph 4000;
+#X obj 324 226 tabwrite graph;
+#N canvas 195 486 398 258 loop_player 0;
+#X obj 80 34 inlet;
+#X obj 130 33 inlet \$2;
+#X obj 220 99 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 101 160 outlet~;
+#X obj 220 158 outlet;
+#X msg 130 63 open tradition2.wav \, 1;
+#X obj 129 100 readsf~ 2;
+#X obj 158 160 outlet~;
+#X connect 0 0 6 0;
+#X connect 1 0 5 0;
+#X connect 2 0 5 0;
+#X connect 2 0 4 0;
+#X connect 5 0 6 0;
+#X connect 6 0 3 0;
+#X connect 6 1 7 0;
+#X connect 6 2 2 0;
+#X restore 140 87 pd loop_player;
+#X obj 166 175 *~;
+#X connect 0 0 5 0;
+#X connect 1 0 2 0;
+#X connect 1 0 6 0;
+#X connect 2 0 1 1;
+#X connect 3 0 13 1;
+#X connect 4 0 13 0;
+#X connect 5 0 1 0;
+#X connect 5 0 4 0;
+#X connect 6 0 3 0;
+#X connect 7 0 14 0;
+#X connect 8 0 14 1;
+#X connect 10 0 9 0;
+#X connect 11 0 10 1;
+#X connect 11 0 15 0;
+#X connect 14 0 10 0;
+#X connect 14 0 4 0;
+#X connect 14 1 15 0;
+#X connect 15 0 9 1;
