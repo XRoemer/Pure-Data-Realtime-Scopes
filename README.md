@@ -31,9 +31,13 @@ Prerequisites are:
  
 
 Tested setups:
+
 win7 / win10, 
+
 python 2.7.4 / 2.7.11, 
+
 PyQt4, 
+
 vispy0.5.0dev0
 
 
