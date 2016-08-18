@@ -9,6 +9,7 @@ The scopes are calculated on the gpu (Thanks to the team of vispy!) and are runn
 - Waveforms might be zoomed and dragged in x and y direction.
 - Drag- and zoom-state can be transferred to other scopes.
 - A marker can be set and transferred to other scopes.
+- The length of the recorded wavefile can be adjusted (44100 = 1 sec, 2205000 = 50 sec). 
 
 Usage:
 * LMB + drag: drag x
