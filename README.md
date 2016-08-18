@@ -18,9 +18,9 @@ Usage:
 * LMB + RMB + drag: drag y
 * press Wheel: set marker
 
-Download the files pd_scopes.py, pd_scopes.pd and Scopes and put them into the same folder.
+Download the files pd_scopes.py, pd_scopes.pd and Scopes.pd and put them into the same folder.
 Copy a soundfile to that folder.
-Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~]
+Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~] or use some other input for the scopes.
 
 Click on [Scopes] for further options.
 
