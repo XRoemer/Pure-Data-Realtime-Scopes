@@ -1,6 +1,7 @@
 # pd_scopes
 
 pd_scopes displays live waveforms in puredata.
+Up to 4 scopes can display 4 different waveforms at the same time.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
@@ -11,3 +12,10 @@ Prerequisites are:
 
 Tested setups:
 win7 / win10, python 2.7.4 / 2.7.11, PyQt4, vispy0.5.0dev0
+
+
+Download the files pd_scopes.py, pd_scopes.pd and Scopes and put them into the same folder.
+Copy a soundfile to that folder.
+Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~]
+
+Click on [Scopes] for further options.
