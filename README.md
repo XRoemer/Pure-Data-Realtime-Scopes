@@ -5,6 +5,11 @@ Up to 4 scopes can display 4 different waveforms at the same time.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
+- Waveforms might be zoomed and dragged in x and y direction.
+- Drag- and zoom-state can be transferred to other scopes.
+- A marker can be set and transferred to other scopes.
+
+
 Prerequisites are:
 - python installation 
 - numpy, PyQt and vispy installed for python
