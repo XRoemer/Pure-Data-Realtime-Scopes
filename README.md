@@ -10,11 +10,18 @@ The scopes are calculated on the gpu (Thanks to the team of vispy!) and are runn
 - Drag- and zoom-state can be transferred to other scopes.
 - A marker can be set and transferred to other scopes.
 
+Usage:
 * LMB + drag: drag x
 * RMB + drag: zoom y
 * Wheel: zoom x
 * LMB + RMB + drag: drag y
 * press Wheel: set marker
+
+Download the files pd_scopes.py, pd_scopes.pd and Scopes and put them into the same folder.
+Copy a soundfile to that folder.
+Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~]
+
+Click on [Scopes] for further options.
 
 
 Prerequisites are:
@@ -26,8 +33,4 @@ Tested setups:
 win7 / win10, python 2.7.4 / 2.7.11, PyQt4, vispy0.5.0dev0
 
 
-Download the files pd_scopes.py, pd_scopes.pd and Scopes and put them into the same folder.
-Copy a soundfile to that folder.
-Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~]
 
-Click on [Scopes] for further options.
