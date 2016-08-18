@@ -10,11 +10,11 @@ The scopes are calculated on the gpu (Thanks to the team of vispy!) and are runn
 - Drag- and zoom-state can be transferred to other scopes.
 - A marker can be set and transferred to other scopes.
 
-LMB + drag: drag x
-RMB + drag: zoom y
-Wheel: zoom x
-LMB + RMB + drag: drag y
-press Wheel: set marker
+-- LMB + drag: drag x
+-- RMB + drag: zoom y
+-- Wheel: zoom x
+-- LMB + RMB + drag: drag y
+-- press Wheel: set marker
 
 
 Prerequisites are:
