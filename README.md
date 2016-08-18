@@ -26,9 +26,9 @@ Click on [Scopes] for further options.
 
 
 Prerequisites are:
-- python installation 
-- numpy, PyQt and vispy installed for python
-- py/pyext for puredata
+- python installation and py/pyext for puredata
+- numpy, PyQt and vispy installed for the python installation, py/pyext recognizes
+ 
 
 Tested setups:
 win7 / win10, python 2.7.4 / 2.7.11, PyQt4, vispy0.5.0dev0
