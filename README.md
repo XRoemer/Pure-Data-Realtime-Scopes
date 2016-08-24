@@ -1,7 +1,7 @@
 # pd_scopes
 
-pd_scopes displays live waveforms in puredata.
-Up to 4 scopes can display 4 different waveforms at the same time.
+pd_scopes displays waveforms in puredata in realtime.
+Up to 4 scopes can display 4 different waveforms.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
