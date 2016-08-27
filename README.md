@@ -42,4 +42,4 @@ vispy0.5.0dev0
 
 
 
-![alt tag](https://github.com/XRoemer/Pure-Data-Realtime-Scopes/blob/master/scope.png)
+![alt tag](https://github.com/XRoemer/Pure-Data-Realtime-Scopes/blob/master/scope4.png)
