@@ -12,8 +12,8 @@ The scopes are calculated on the gpu (Thanks to the team of vispy!) and are runn
 - The length of the recorded wavefile can be adjusted (44100 = 1 sec, 2205000 = 50 sec). 
 
 Usage:
-* LMB + drag: drag x
-* RMB + drag: zoom y
+* LMB + drag:    drag x
+* RMB + drag:    zoom y
 * Wheel: zoom x
 * LMB + RMB + drag: drag y
 * press Wheel: set marker
