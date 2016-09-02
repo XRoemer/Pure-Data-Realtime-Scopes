@@ -22,7 +22,7 @@ Usage:
 
 Buttons: 
 * adjust y: set all windows to the y-range of data button 
-* m: set all markers to selected button 
+* m: set all markers to selected
 * tr: transfer zoom and pos x to others 
 
 Slider: 
