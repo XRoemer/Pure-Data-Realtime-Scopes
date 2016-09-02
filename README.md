@@ -1,7 +1,7 @@
-# pd_scopes
+# Pure Data Scopes
 
-pd_scopes displays waveforms in puredata in realtime.
-Up to 4 scopes can display 4 different waveforms.
+pd_scopes displays waveforms and spectograms in realtime.
+Up to 4 scopes can display 4 different waveforms or spectograms.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
@@ -17,12 +17,25 @@ Usage:
 * Wheel: zoom x
 * LMB + RMB + drag: drag y
 * press Wheel: set marker
+* press Wheel + Control: set all markers
+* Wheel + Control + Shift: resize scope
 
-Download the files pd_scopes.py, pd_scopes.pd and Scopes.pd and put them into the same folder.
+Buttons: 
+* adjust y: set all windows to the y-range of data button 
+* m: set all markers to selected button 
+* tr: transfer zoom and pos x to others 
+
+Slider: 
+* left: boost color 
+* middle: adjust point size 
+* right: cut display of frequencies (slider goes from 0 - 100% of the highest value)
+
+
+
+Download the zip file and extract.
 Copy a soundfile to that folder.
-Open pd_scopes.pd with pd and change the name of the soundfile in the messagebox for [readsf~] or use some other input for the scopes.
-
-Click on [Scopes] for further options.
+Open pd_scopes_example.pd with pd and change the name of the soundfile in the messagebox or use some other input for the scopes.
+Turn up volume, press start, press open and start dsp.
 
 
 Prerequisites are:
