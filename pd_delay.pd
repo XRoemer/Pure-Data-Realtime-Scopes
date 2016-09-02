@@ -1,0 +1,18 @@
+#N canvas 390 502 450 211 10;
+#X obj 151 13 inlet~;
+#X obj 153 133 outlet~;
+#X msg 30 75 reload;
+#X msg 30 102 \; pd dsp \$0;
+#X obj 364 139 print;
+#X obj 151 96 pyext~ 1 0 4 1 pd_effects Delay;
+#X msg 365 63 delay \$1;
+#X obj 365 16 inlet;
+#X msg 289 21 88200;
+#X connect 0 0 5 0;
+#X connect 2 0 3 0;
+#X connect 2 0 5 0;
+#X connect 5 0 1 0;
+#X connect 5 1 4 0;
+#X connect 6 0 5 4;
+#X connect 7 0 6 0;
+#X connect 8 0 6 0;

@@ -1,0 +1,98 @@
+#N canvas 219 55 1086 864 10;
+#X msg 751 498 on_top 44100 scope specto -win 4096 -cut 2000, f 9
+;
+#X msg 485 498 on_top 88200 specto -win 4096 -cut 2000, f 9;
+#X msg 919 496 44100 on_top scope specto -win 4096 -cut 10000 scope
+scope, f 10;
+#X msg 831 497 on_top 441000 scope specto -win 4096 -cut 2000 specto
+-win 4096 -cut 5000, f 10;
+#X msg 571 499 on_top 220500 scope specto -win 8192 -cut 2000 scope
+, f 10;
+#X msg 602 706 on_top 220500 scope;
+#X msg 604 745 -color 0.7 0.2 0 -bg-color 0.9 0.9 0.9;
+#X msg 661 498 on_top 220500 scope specto -win 4096 -cut 2000, f 10
+;
+#X msg 603 770 -specto-color 0 0 0 -specto-bg-color 1 1 1;
+#X obj 67 741 pd_scopes, f 29;
+#X msg 602 684 not_on_top 44100 scope;
+#X obj 67 610 pd_delay;
+#X msg 120 588 2048;
+#X msg 604 792 -scope-color 1 1 0 -scope-bg-color 1 0.8 0.8;
+#X obj 109 57 pd_loop_player;
+#X obj 90 331 dac~;
+#X obj 121 228 s~ sound;
+#X obj 90 309 *~;
+#X obj 115 309 *~;
+#X obj 54 177 vsl 30 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 1;
+#X obj 66 519 r~ sound;
+#X obj 117 657 r~ sound;
+#X obj 193 615 pd_delay;
+#X msg 246 593 2048;
+#X obj 195 498 osc~;
+#X floatatom 232 429 5 0 0 0 - - -, f 5;
+#X obj 195 473 *~ 100;
+#X obj 256 500 osc~;
+#X obj 255 473 *~ 10;
+#X obj 220 533 *~;
+#X msg 439 317 on_top 220500 scope specto -win 4096 -cut 2000 scope
+specto -win 4096 -cut 5000, f 10;
+#X obj 439 293 loadbang;
+#X obj 120 566 loadbang;
+#X obj 246 571 loadbang;
+#X obj 232 366 loadbang;
+#X msg 232 387 30;
+#X obj 525 33 cnv 15 500 200 empty empty empty 20 12 0 14 -262130 -66577
+0;
+#X text 570 103 press "open" in pd_scopes;
+#X text 569 120 in the scopes-window: press "adjust y" and use scroll
+wheel;
+#X text 569 152 for a synchronous display of waveforms and ffts \,
+the waveforms have to be delayed by the half of the window size of
+the fft. use pd_delay and adjust the number in the message box.;
+#X msg 109 35 set file replace_with_your_soundfile.wav;
+#X obj 716 331 cnv 15 100 60 empty empty Scopes 20 25 1 18 -257985
+-66577 0;
+#X text 568 50 for a try-out copy a wave file into py_scopes_example's
+folder \, replace "replace_with_your-soundfile.wav" \, turn up volume
+and start loop player.;
+#X connect 0 0 9 4;
+#X connect 1 0 9 4;
+#X connect 2 0 9 4;
+#X connect 3 0 9 4;
+#X connect 4 0 9 4;
+#X connect 5 0 9 4;
+#X connect 6 0 9 4;
+#X connect 7 0 9 4;
+#X connect 8 0 9 4;
+#X connect 10 0 9 4;
+#X connect 11 0 9 0;
+#X connect 12 0 11 1;
+#X connect 13 0 9 4;
+#X connect 14 0 16 0;
+#X connect 14 0 17 1;
+#X connect 14 1 18 1;
+#X connect 17 0 15 0;
+#X connect 18 0 15 1;
+#X connect 19 0 17 0;
+#X connect 19 0 18 0;
+#X connect 20 0 11 0;
+#X connect 21 0 9 1;
+#X connect 22 0 9 2;
+#X connect 23 0 22 1;
+#X connect 24 0 29 0;
+#X connect 25 0 26 0;
+#X connect 25 0 28 0;
+#X connect 26 0 24 0;
+#X connect 27 0 29 1;
+#X connect 28 0 27 0;
+#X connect 29 0 22 0;
+#X connect 29 0 9 3;
+#X connect 30 0 9 4;
+#X connect 31 0 30 0;
+#X connect 32 0 12 0;
+#X connect 33 0 23 0;
+#X connect 34 0 35 0;
+#X connect 35 0 25 0;
+#X connect 40 0 14 0;
+#X coords 0 864 1 863 500 150 0;

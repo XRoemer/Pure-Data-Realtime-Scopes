@@ -1,0 +1,42 @@
+#N canvas 419 261 449 369 10;
+#X obj 245 239 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 185 214 readsf~ 2;
+#X obj 167 316 outlet~;
+#X obj 199 298 outlet~;
+#X obj 269 14 inlet;
+#X obj 168 268 *~;
+#X obj 198 267 *~;
+#X obj 25 56 vsl 30 128 0 1 0 0 empty empty empty 0 -9 0 10 -262130
+-1 -1 12700 1;
+#X obj 61 129 bng 40 250 50 0 empty empty stop 5 50 0 14 -261234 -1
+-1;
+#X msg 185 187 0;
+#X obj 59 57 bng 40 250 50 0 empty empty start 1 50 0 14 -204786 -1
+-1;
+#X msg 266 177 open tradition.wav \, 1;
+#X msg 271 99 addcomma;
+#X msg 271 122 add2 1;
+#X msg 270 75 set open \$1;
+#X msg 270 52 file tradition.wav;
+#X connect 0 0 11 0;
+#X connect 1 0 5 1;
+#X connect 1 1 6 1;
+#X connect 1 2 0 0;
+#X connect 4 0 15 0;
+#X connect 5 0 2 0;
+#X connect 6 0 3 0;
+#X connect 7 0 5 0;
+#X connect 7 0 6 0;
+#X connect 8 0 9 0;
+#X connect 9 0 1 0;
+#X connect 10 0 15 0;
+#X connect 10 0 12 0;
+#X connect 10 0 13 0;
+#X connect 10 0 11 0;
+#X connect 11 0 1 0;
+#X connect 12 0 11 0;
+#X connect 13 0 11 0;
+#X connect 14 0 11 0;
+#X connect 15 0 14 0;
+#X coords 0 -1 1 1 85 160 1 20 30;

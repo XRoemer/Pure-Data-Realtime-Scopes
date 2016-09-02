@@ -27,6 +27,7 @@ from PyQt4 import QtGui, QtCore
 import pyext
 
 from vispy import app, gloo
+from vispy.gloo import gl 
 from vispy import visuals
 from vispy.visuals.transforms import STTransform, NullTransform
 from vispy.gloo import Program, VertexBuffer, IndexBuffer
@@ -37,6 +38,13 @@ from math import exp as math_exp
 from traceback import format_exc as tb
 from threading import Thread 
 import numpy as np
+import re
+from collections import OrderedDict
+
+# try:
+#     from OpenGL import GL
+# except Exception as e:
+#     print(e)
 
 
 platform = sys.platform
@@ -90,57 +98,48 @@ class Main_Window(QtGui.QMainWindow):
 class Scopes(pyext._class):
     
     def __init__(self,*args):
-        print('args:', args)
+        #print('args:', args)
                  
-        self.signal = { i : np.array([], np.float32) for i in range(4) }
         self.amount_scopes = 1
+        self.scopes_info = {0: {'type':'scope'} }
         self.scopes = {}
         
-        self.buffer_multi = 30
-        self.smpls_all = 44100
-        self.amount_samples = 64 * self.buffer_multi    
-        self.amount_curves = self.smpls_all / self.amount_samples + 1
-        
-        self.buffer = 0
+        self.buffer_size = 64
+        self.update_display = 30
+        self.smpls_all = 220500        
+        self.counter = 0
         self.buffer_counter = 0
-        self.update_pos_line = 30
-        
         self.open_graph_on_top = 1
         self.started = False
         
-        self.zaehler = 0
-        self.texte_args = None, None, None
-            
-            
-    def set_anzahl(self):  
-        self.amount_samples = 64 * self.buffer_multi 
-        self.amount_curves = self.smpls_all / self.amount_samples + 1
-
+        self.scope_color_fg = (1, .5, 0)
+        self.scope_color_bg = (0, 0, 0)
+        self.specto_color_fg = (1, .5, 0)
+        self.specto_color_bg = (0, 0, 0)
+        
+           
+        
+        
     
     def _anything_(self,n,*args):
         #print("Message into inlet",n,":",args)
         
         str_arg = str(args[0])
+        
+        # defaults
+        specto_freq_cut = 5000
+        specto_win_size = 1024
+        
+        def get_color(a,t):
+            i = t.index(a)
+            r = float(t[i + 1])
+            g = float(t[i + 2])
+            b = float(t[i + 3])
+            return r,g,b
 
         try:
-            if str_arg.startswith('scopes'):
-                self.amount_scopes = int(args[1])
                 
-            elif str_arg.startswith('samples'):
-                self.smpls_all = int(args[1])
-                self.set_anzahl()
-                
-            elif str_arg.startswith('buffer_multi'):
-                self.buffer_multi = int(args[1])
-                self.set_anzahl()
-                
-            elif str_arg.startswith('update_pos_line'):
-                self.update_pos_line = int(args[1])
-                
-            elif str_arg.startswith('open_graph_on_top'):
-                self.open_graph_on_top = int(args[1])
-                
-            elif str_arg.startswith('open_scopes'):
+            if str_arg.startswith('open_scopes'):
                 
                 if self.started:
                     return
@@ -149,6 +148,122 @@ class Scopes(pyext._class):
                 
                 t = Thread(target=self.start_v,args=())
                 t.start()
+                
+            else:
+                txt = ' '.join([str(a) for a in args])
+                txt_split = re.split(r'\s(?=(?:scope|specto)\b)', txt)
+                
+                                
+                # COLORS
+                txt_split2 = txt.split()
+                            
+                if '-color' in txt:
+                    try:
+                        r,g,b = get_color('-color', txt_split2)
+                        self.scope_color_fg = r,g,b
+                        self.specto_color_fg = r,g,b
+                    except:
+                        pass
+                    
+                if '-bg-color' in txt:
+                    txt_split2 = txt.split()
+                    try:
+                        r,g,b = get_color('-bg-color', txt_split2)
+                        self.scope_color_bg = r,g,b
+                        self.specto_color_bg = r,g,b
+                    except:
+                        pass
+                    
+                if '-scope-color' in txt:
+                    txt_split2 = txt.split()
+                    try:
+                        r,g,b = get_color('-scope-color', txt_split2)
+                        self.scope_color_fg = r,g,b
+                    except:
+                        pass
+                    
+                if '-scope-bg-color' in txt:
+                    txt_split2 = txt.split()
+                    try:
+                        r,g,b = get_color('-scope-bg-color', txt_split2)
+                        self.scope_color_bg = r,g,b
+                    except:
+                        pass
+                    
+                if '-specto-color' in txt:
+                    txt_split2 = txt.split()
+                    try:
+                        r,g,b = get_color('-specto-color', txt_split2)
+                        self.scope_color_fg = r,g,b
+                    except:
+                        pass
+                    
+                if '-specto-bg-color' in txt:
+                    txt_split2 = txt.split()
+                    try:
+                        r,g,b = get_color('-specto-bg-color', txt_split2)
+                        self.scope_color_bg = r,g,b
+                    except:
+                        pass
+                    
+                 
+                    
+                # ON_TOP
+                if '-on_top' in txt:
+                    self.open_graph_on_top = True
+                elif '-not_on_top' in txt:
+                    self.open_graph_on_top = False
+                    
+                    
+                # AMOUNT OF DISPLAYED SAMPLES 
+                txt_split1 = txt_split[0].split(' ')
+                for t in txt_split1:
+                    if t.isdigit():
+                        self.smpls_all = int(t)
+                
+                
+                # RETURN IF NO SCOPES OR SPECTOGRAMS ARE USED
+                if ('scope' not in txt) and ('specto' not in txt):
+                    return  
+                
+                
+                # SET AMOUNT AND ORDER OF SCOPES AND SPECTOGRAMS
+                self.scopes_info = OrderedDict()
+                
+                for i in range(1, len(txt_split)):
+                    
+                    j = i - 1
+                    
+                    if txt_split[i] == 'scope':
+                        self.scopes_info[j] = {'type' : 'scope'}
+                                         
+                    elif txt_split[i].startswith('specto'):
+                        
+                        self.scopes_info[j] = {'type' : 'specto'} 
+                        
+                        txt_split2 = txt_split[i].split()
+                        
+                        if '-win' in txt_split2:
+                            try:
+                                index = txt_split2.index('-win')
+                                if txt_split2[index + 1].isdigit():
+                                    self.scopes_info[j]['win'] = int(txt_split2[index + 1])
+                            except:
+                                self.scopes_info[j]['win'] = specto_win_size
+                                
+                        if '-cut' in txt_split2:
+                            try:
+                                index = txt_split2.index('-cut')
+                                if txt_split2[index + 1].isdigit():
+                                    self.scopes_info[j]['cut'] = int(txt_split2[index + 1])
+                            except:
+                                self.scopes_info[j]['cut'] = specto_freq_cut
+                            
+                        
+                self.amount_scopes = len(self.scopes_info)
+
+                  
+                    
                                 
         except:
             print(tb())
@@ -160,7 +275,7 @@ class Scopes(pyext._class):
             oApp = app.use_app()
             oApp.native.aboutToQuit.connect(oApp.native.deleteLater)
             
-            self.win = Main_Window(self, 1)
+            self.win = Main_Window(self, self.open_graph_on_top)
 
             self.gui()
             self.win.setCentralWidget(self.top_widget)
@@ -171,16 +286,43 @@ class Scopes(pyext._class):
         except Exception as e:
             print(tb())
               
+              
+        
+    def window_gaussian(self, v): 
+    
+        N = v / 2
+        alpha = .23
+        sig = 1.
+        werte = []
+        
+        def rechne(n):
+            #return exp(-1 / 2 * ( ( n-(N-1) / 2 ) / ( alpha * (N-1) / 2) )**2 )
+            #return np.exp( -(x**2/(2*sig**2)) / np.sqrt(2 * np.pi * sig) )
+            return 1 - np.exp( -( alpha * x / N )**2 )
+        
+        for x in range(v/2):
+            werte.append(rechne(float(x)/N-1))
+            
+        werte = werte + list(reversed(werte))
+        
+        return werte
+    
                          
     def adjust_y(self):
 
         for a in range(self.amount_scopes):
             scope = self.scopes[a]
-            data = scope.y[0]
-            maxi = max(0, np.amax(data))
-            mini = min(0, np.amin(data))
+            
+            if scope.is_scope:
+                data = scope.y[0]
+                maxi = max(0, np.amax(data))
+                mini = min(0, np.amin(data))
+            else:
+                maxi = float(scope.fft_window_size_specto)
+                mini = 0
             
             positions, null_pos = berechne_abstaende_y_Achse(maxi, mini)
+
             
             if maxi - mini == 0:
                 adjust = 1
@@ -193,10 +335,13 @@ class Scopes(pyext._class):
             scope.program['zoom_y'] = 1
             scope.zoom_y = 1
             
-            # Update der 0-Linie
-            model = translate((0, null_pos, 0))
-            scope.xAchse['model'] = model
-            
+            if scope.is_scope:
+                # Update der 0-Linie
+                model = translate((0, null_pos, 0))
+                scope.xAchse['model'] = model
+            else:
+                positions, null_pos = berechne_abstaende_y_Achse2(scope.fft_window_size, 0, 1, scope.cut_freq )
+                
             # Update der Skalierungsanzeige
             scope.yAxis.max_y = maxi 
             scope.yAxis.min_y = mini
@@ -246,81 +391,200 @@ class Scopes(pyext._class):
                 
                 scope.xAxis.positions = positions  
                 scope.xAxis.update()
-                
+
                 scope.update()
-                
+                    
+            
                                         
     def gui(self):
         
-        ## top-level widget to hold everything
-        self.top_widget = QtGui.QWidget()
-        self.top_widget.setStyleSheet('QWidget {color: #c9c9c9; background-color: #333333}')
+        try:
+            ## top-level widget to hold everything
+            self.top_widget = QtGui.QWidget()
+            self.top_widget.setStyleSheet('QWidget {color: #c9c9c9; background-color: #333333}')
+    
+            toplayout = QtGui.QGridLayout()
+            self.top_widget.setLayout(toplayout)
+            toplayout.setSpacing(0)
+            
+            btn_y_zoom = QtGui.QPushButton('adjust y')
+            btn_y_zoom.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
+            btn_y_zoom.clicked.connect(self.adjust_y)
 
-        toplayout = QtGui.QGridLayout()
-        self.top_widget.setLayout(toplayout)
-        toplayout.setSpacing(0)
+            widget_head = QtGui.QWidget()
+            layout_head = QtGui.QGridLayout()
+            widget_head.setLayout(layout_head)
+            layout_head.setSpacing(0)
+            widget_head.setMaximumHeight(60)
+    
+            #void QGridLayout::addWidget(  fromRow,  fromColumn,  rowSpan,  columnSpan,  alignment = 0)
+            toplayout.addWidget(widget_head, 0, 1, 1, 2)
+            layout_head.addWidget(btn_y_zoom, 1, 3, 1, 1)
+            
+            
+            for nr, info in self.scopes_info.items():
+                if info['type'] == 'specto':
+                    self.gui_spectogram(toplayout, nr)
+                else:
+                    self.gui_scope(toplayout, nr)
+                
+                
+            self.adjust_y()
+            
         
-        btn_y_zoom = QtGui.QPushButton('adjust y')
-        btn_y_zoom.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
-        btn_y_zoom.clicked.connect(self.adjust_y)
+        except Exception as e:
+            print(tb())
+            #pd()
+    
+    
+    
+    def gui_spectogram(self, toplayout, a):
         
-        ####
-        widget_head = QtGui.QWidget()
-        layout_head = QtGui.QGridLayout()
-        widget_head.setLayout(layout_head)
-        layout_head.setSpacing(0)
+        # http://doc.qt.io/qt-4.8/stylesheet-examples.html
+        style = '''
+QSlider { height: 16px; }
+        
+       
+QSlider:handle:horizontal {
+    background: grey;
+    border: 1px solid blue;
+    border-radius: 3px;
+    
+}
 
-        #void QGridLayout::addWidget(  fromRow,  fromColumn,  rowSpan,  columnSpan,  alignment = 0)
-        toplayout.addWidget(widget_head, 0, 1, 1, 2)
-        layout_head.addWidget(btn_y_zoom, 1, 3, 1, 1)
+'''
         
-#         curvePen = pg.mkPen(color=(50, 50, 255))
+        xAxis = XAxis()
+        yAxis = YAxis_Spectogram(self)
         
-        for a in range(self.amount_scopes):
+        specto = Canvas_Spectogram(self, self.smpls_all, self.buffer_size, xAxis, yAxis, self.scopes_info[a]) 
+        self.scopes[a] = specto
+
+        yAxis.specto = specto
+        
+        slider_boost = QtGui.QSlider()
+        slider_boost.setInvertedControls(True)
+        slider_boost.setOrientation(QtCore.Qt.Horizontal)
+        slider_boost.setMaximum(200)
+        slider_boost.setMinimum(1)
+        slider_boost.valueChanged.connect(specto.boost_color)    
+        slider_boost.setStyleSheet("QSlider { height: 16px; }") 
+        slider_boost.setTickInterval(40)
+        slider_boost.setTickPosition(1) 
+        slider_boost.setValue(10)
+        
+        specto.slider_boost = slider_boost      
+        
+        slider_point_size = QtGui.QSlider()
+        slider_point_size.setOrientation(QtCore.Qt.Horizontal)
+        slider_point_size.setMaximum(200)
+        slider_point_size.setMinimum(1)
+        slider_point_size.valueChanged.connect(specto.change_point_size)
+        slider_point_size.setStyleSheet("QSlider { height: 16px; background-color:  #474747;}") 
+        slider_point_size.setTickInterval(100)
+        slider_point_size.setTickPosition(1)
+        
+        specto.slider_point_size = slider_point_size   
+        
+        slider_cut = QtGui.QSlider()
+        slider_cut.setOrientation(QtCore.Qt.Horizontal)
+        slider_cut.setMaximum(100)
+        slider_cut.setMinimum(0)
+        slider_cut.valueChanged.connect(specto.cut_displayed_values)
+        slider_cut.setStyleSheet("QSlider { height: 16px; }")
+        slider_cut.setTickInterval(20)
+        slider_cut.setTickPosition(1)
+        
+        specto.slider_cut = slider_cut   
+        
+        widget = QtGui.QWidget()
+        layout = QtGui.QGridLayout()
+        widget.setLayout(layout)
+        layout.setSpacing(0)
+        layout.setContentsMargins(10, 0, 20, 5)
+        specto.widget = widget
          
-            xAxis = XAxis()
-            yAxis = YAxis()
-            self.scopes[a] = Canvas(self.smpls_all, xAxis, yAxis, self.scopes) 
-            self.scopes[a].widget = self.top_widget
-             
-            widget = QtGui.QWidget()
-            layout = QtGui.QGridLayout()
-            widget.setLayout(layout)
-            layout.setSpacing(0)
-            layout.setContentsMargins(10, 0, 20, 5)
-             
-            toplayout.addWidget(widget, 4 + a,1,1,2)
-            layout.addWidget(self.scopes[a].native, 0,2,1,1)
-              
-            btn_marker = QtGui.QPushButton('m')
-            btn_marker.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
-            btn_marker.clicked.connect(partial( self.set_markers_to_selected,(a, 'marker')) )
-              
-            btn_y_transfer = QtGui.QPushButton('tr')
-            btn_y_transfer.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
-            btn_y_transfer.clicked.connect(partial(self.set_xrange_to_selected, (a, 'transfer')) )
-            btn_y_transfer.setObjectName("newGame")
-              
-            widget_scope_btns = QtGui.QWidget()
-            widget_scope_btns.setFixedWidth(40)
-            widget_scope_btns.setFixedHeight(25)
-  
-            layout_scope_btns = QtGui.QGridLayout()
-            widget_scope_btns.setLayout(layout_scope_btns)
-            layout_scope_btns.setSpacing(2)
-            layout_scope_btns.setContentsMargins(0,5,5,0)
-              
-            layout_scope_btns.addWidget(btn_marker, 0, 0, 1, 1)
-            layout_scope_btns.addWidget(btn_y_transfer, 0, 1, 1, 1)
-            layout.addWidget(widget_scope_btns, 2,1,1,1)
-            
-            layout.addWidget(xAxis, 2,2,1,1)
-            xAxis.setFixedHeight(25)
-            
-            layout.addWidget(yAxis, 0,1,1,1) 
-            yAxis.setFixedWidth(40)
-
-            
+        toplayout.addWidget(widget, 4 + a,1,1,2)
+        
+        layout.addWidget(slider_boost, 0,2,1,1)
+        layout.addWidget(slider_point_size, 0,3,1,1)
+        layout.addWidget(slider_cut, 0,4,1,1)
+        layout.addWidget(specto.native, 2,2,1,3)
+          
+        btn_marker = QtGui.QPushButton('m')
+        btn_marker.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
+        btn_marker.clicked.connect(partial( self.set_markers_to_selected,(a, 'marker')) )
+          
+        btn_y_transfer = QtGui.QPushButton('tr')
+        btn_y_transfer.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
+        btn_y_transfer.clicked.connect(partial(self.set_xrange_to_selected, (a, 'transfer')) )
+        btn_y_transfer.setObjectName("newGame")
+          
+        widget_scope_btns = QtGui.QWidget()
+        widget_scope_btns.setFixedWidth(40)
+        widget_scope_btns.setFixedHeight(25)
+        
+        layout_scope_btns = QtGui.QGridLayout()
+        widget_scope_btns.setLayout(layout_scope_btns)
+        layout_scope_btns.setSpacing(2)
+        layout_scope_btns.setContentsMargins(0,5,5,0)
+          
+        layout_scope_btns.addWidget(btn_marker, 2, 0, 1, 1)
+        layout_scope_btns.addWidget(btn_y_transfer, 2, 1, 1, 1)
+        layout.addWidget(widget_scope_btns, 4,1,1,1)
+                
+        layout.addWidget(xAxis, 4,2,1,3)
+        xAxis.setFixedHeight(25)
+        
+        layout.addWidget(yAxis, 2,1,1,1) 
+        yAxis.setFixedWidth(50)
+    
+    
+    def gui_scope(self, toplayout, a):
+        
+        xAxis = XAxis()
+        yAxis = YAxis_Scope()
+        self.scopes[a] = Canvas_Scope(self, self.smpls_all, xAxis, yAxis, self.scopes) 
+        
+        widget = QtGui.QWidget()
+        layout = QtGui.QGridLayout()
+        widget.setLayout(layout)
+        layout.setSpacing(0)
+        layout.setContentsMargins(10, 0, 20, 5)
+        self.scopes[a].widget = widget
+         
+        toplayout.addWidget(widget, 4 + a,1,1,2)
+        layout.addWidget(self.scopes[a].native, 0,2,1,1)
+          
+        btn_marker = QtGui.QPushButton('m')
+        btn_marker.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
+        btn_marker.clicked.connect(partial( self.set_markers_to_selected,(a, 'marker')) )
+          
+        btn_y_transfer = QtGui.QPushButton('tr')
+        btn_y_transfer.setStyleSheet('QPushButton {color: #c9c9c9; background-color: #474747}')
+        btn_y_transfer.clicked.connect(partial(self.set_xrange_to_selected, (a, 'transfer')) )
+        btn_y_transfer.setObjectName("newGame")
+          
+        widget_scope_btns = QtGui.QWidget()
+        widget_scope_btns.setFixedWidth(40)
+        widget_scope_btns.setFixedHeight(25)
+        
+        layout_scope_btns = QtGui.QGridLayout()
+        widget_scope_btns.setLayout(layout_scope_btns)
+        layout_scope_btns.setSpacing(2)
+        layout_scope_btns.setContentsMargins(0,5,5,0)
+          
+        layout_scope_btns.addWidget(btn_marker, 0, 0, 1, 1)
+        layout_scope_btns.addWidget(btn_y_transfer, 0, 1, 1, 1)
+        layout.addWidget(widget_scope_btns, 2,1,1,1)
+        
+        layout.addWidget(xAxis, 2,2,1,1)
+        xAxis.setFixedHeight(25)
+        
+        layout.addWidget(yAxis, 0,1,1,1) 
+        yAxis.setFixedWidth(50)
+        
+        
     def _signal(self):
         '''
         Drawing of the Plot Window
@@ -331,54 +595,107 @@ class Scopes(pyext._class):
             if not self.started:
                 return
             
-            if self.buffer_counter + 64 >= self.smpls_all:
-                noch_zu_schreibende = self.smpls_all -1 - self.buffer_counter
+            for i in range(self.amount_scopes):
                 
-                for i in range(self.amount_scopes):
-                    ysl1 = self._invec(i)[:noch_zu_schreibende]
-                    ysl2 = self._invec(i)[noch_zu_schreibende:]
+                scope = self.scopes[i]
+                
+                if scope.is_scope:
+                    continue
+                
+                else:
+                
+                    scope.ysl = np.append(scope.ysl[self.buffer_size:], self._invec(i) )
+        
+                    fft = np.fft.rfft(scope.ysl * scope.window)
                     
-                    self.scopes[i].y[0][self.buffer_counter: self.buffer_counter + noch_zu_schreibende] = ysl1
-                    self.scopes[i].y[0][: 64 - noch_zu_schreibende] = ysl2
+                    # cut: don't show upper frequencies
+                    fft = fft[:scope.fft_window_size_specto +1]
                     
-                    self.scopes[i].program['position'].set_data(self.scopes[i].y)
-                
-                
-                self.buffer_counter = 64 - noch_zu_schreibende
-                self.zaehler = 0
-                
-                for i in range(self.amount_scopes):
+                    fft_real = fft.real.astype(np.float32)[:-1]
+                    ysl1 = np.abs(fft_real)
+                 
+                    fft_imag = fft.imag.astype(np.float32)[:-1]
+                    ysl2 = np.abs(fft_imag)
+         
+                    scope.ysl_fft = np.power(ysl1 * ysl2 , .5) / 100.  #/ scope.fft_window_size * 4
+
+                    maximum = float(scope.ysl_fft.max())
+                    if maximum > scope.program['maximum'][0]:
+                        scope.program['maximum'] = maximum
+                        
                     
-                    pos = -1 + (self.smpls_all / (64 - noch_zu_schreibende)) + self.scopes[i].program['versatz'][0]
-                    self.scopes[i].prg_poslinie['model'] = translate((pos, 0, 0))
-                    self.scopes[i].pos_line = self.buffer_counter
-                    self.scopes[i].update()
+                    #scope.ysl_fft[scope.ysl_fft <= scope.ysl_fft.max() * scope.display_values ] = 0.
+                    
             
+            if self.buffer_counter + self.buffer_size >= self.smpls_all  :
+                
+                noch_zu_schreibende = self.smpls_all - self.buffer_counter - 1
+                
+                
+                for i in range(self.amount_scopes):
+                    
+                    scope = self.scopes[i]
+                    
+                    if scope.is_scope:
+                        
+                        ysl = self._invec(i)                    
+                        scope.y[0][self.buffer_counter: self.buffer_counter + noch_zu_schreibende] = ysl[:noch_zu_schreibende]
+                        scope.y[0][: self.buffer_size - noch_zu_schreibende] = ysl[noch_zu_schreibende:]
+                        scope.program['position'].set_data(scope.y)
+                    
+                    
+                    # The rest is left out for the spectogram
+#                     else:
+#                         
+#                         y_pos = int( self.buffer_counter / 64 * scope.fft_window_size_specto)
+#                         scope.program['farbe'].set_subdata(scope.ysl_fft, y_pos)
+
+                
+                self.buffer_counter = self.buffer_size - noch_zu_schreibende
+                self.counter = 0
+                
             else:
                 for i in range(self.amount_scopes):
-                    ysl = self._invec(i)
-                    self.scopes[i].y[0][self.buffer_counter: self.buffer_counter + 64] = ysl
-                    self.scopes[i].program['position'].set_data(self.scopes[i].y)
-                            
-                self.buffer_counter += 64
-                self.zaehler += 1
-            
-                if self.zaehler % 30 == 0:
-                    self.zaehler = 0
+                    
+                    scope = self.scopes[i]
+                    
+                    if scope.is_scope:
+                        
+                        ysl = self._invec(i)                    
+                        scope.y[0][self.buffer_counter: self.buffer_counter + 64] = ysl
+                        scope.program['position'].set_data(scope.y)
+                        
+                    else:
+                        
+                        y_pos = int( self.buffer_counter / 64 * scope.fft_window_size_specto)
+                        scope.program['farbe'].set_subdata(scope.ysl_fft, y_pos)
+                
+                
+                self.buffer_counter += self.buffer_size
+                self.counter += 1
+                                
+                # Updating the scopes every Nth time for less gpu/cpu usage
+                if self.counter % self.update_display == 0:
+                    self.counter = 0
                     
                     for i in range(self.amount_scopes):
                         
-                        zoom = self.scopes[i].program['zoom_x'][0]
-                        versatz = self.scopes[i].program['versatz'][0]
-                        drag_x = self.scopes[i].program['drag_x'][0]
+                        scope = self.scopes[i]
+
+                        zoom = scope.program['zoom_x'][0]
+                        versatz = scope.program['versatz'][0]
+                        drag_x = scope.program['drag_x'][0]
                         
-                        pos = -1 + float(self.buffer_counter)/self.smpls_all * 2
+                        pos = -1 + float(self.buffer_counter) / self.smpls_all * 2 
                         pos += drag_x 
-                        pos = pos * zoom + self.scopes[i].program['versatz'][0]
+                        pos = pos * zoom + scope.program['versatz'][0]
                         
-                        self.scopes[i].prg_poslinie['model'] = translate((pos, 0, 0))
-                        self.scopes[i].pos_line = self.buffer_counter
-                        self.scopes[i].update()
+                        scope.prg_poslinie['model'] = translate((pos, 0, 0))
+                        scope.pos_line = self.buffer_counter
+                        scope.update()
+                        
+#                         if not scope.is_scope:
+#                             print(scope.program['maximum'][0])
                         
         except:
             print(tb())
@@ -387,7 +704,84 @@ class Scopes(pyext._class):
 
 
 
-VERT_SHADER = """
+VERT_SHADER_SPECTOGRAM = """
+
+// y coordinate of the position.
+attribute float farbe;
+attribute vec3 color_bg;
+attribute vec3 color_fg;
+
+// time index.
+attribute vec2 index;
+uniform int buffer_size;
+
+// Number of samples per signal.
+uniform float all_samples;
+
+// Zoom Position X / Y
+uniform float zoom_x;
+uniform float zoom_y;
+
+attribute float versatz;
+attribute float drag_x;
+attribute float drag_y;
+attribute float adjust_y;
+attribute float boost;
+
+attribute float point_size;
+attribute float maximum;
+attribute float cut_displayed_values;
+
+
+varying vec4 v_color2;
+
+void main() {
+    
+    float point_size =  3. * point_size;
+    gl_PointSize = point_size;
+    
+    vec3 col;
+    
+    if (farbe >=  maximum * cut_displayed_values)
+        { 
+        float r_dif = color_fg.x - color_bg.x  ; 
+        float r     = color_bg.x + r_dif * farbe * boost;
+        float g_dif = color_fg.y - color_bg.y; 
+        float g     = color_bg.y + (g_dif * farbe * boost);
+        float b_dif = color_fg.z - color_bg.z; 
+        float b     = color_bg.z + (b_dif * farbe * boost);
+        
+        col = vec3(r, g, b);
+        }
+        
+    else
+        {
+        col = color_bg;
+        }
+    
+    v_color2 = vec4( col, 1.);
+    
+    
+    float x = -1 + ( index.x  / all_samples );
+    float y =  index.y;   
+                  
+    gl_Position =  ( vec4( x * zoom_x , y * zoom_y * adjust_y , 0.0, 1.0) 
+                    + vec4(drag_x * zoom_x , drag_y , 0, 0) 
+                    + vec4(versatz, 0, 0, 0)
+                    );
+}
+"""
+
+FRAG_SHADER_SPECTOGRAM = """
+varying vec4 v_color2;
+
+void main() {
+    gl_FragColor = v_color2;
+}
+"""
+
+
+VERT_SHADER_SCOPE = """
 
 // y coordinate of the position.
 attribute float position;
@@ -407,7 +801,11 @@ attribute float drag_x;
 attribute float drag_y;
 attribute float adjust_y;
 
+attribute vec3 color;
+varying vec3 u_color;
+
 void main() {
+    u_color = color;
     
     float x = -1 + ( 2 * index.z / (all_samples-1) );
     float y =  position;    
@@ -419,15 +817,15 @@ void main() {
 }
 """
 
-FRAG_SHADER = """
+FRAG_SHADER_SCOPE = """
 
-varying vec4 v_color;
-//varying vec3 v_index;
+varying vec3 u_color;
 
 void main() {
-    gl_FragColor = vec4 (.8, .45, 0.0, 1.0); 
+    gl_FragColor = vec4 (u_color, 1.0); 
 }
 """
+
 
 
 vertex_line = """
@@ -456,12 +854,404 @@ void main() {
 
 
 
-class Canvas(app.Canvas):
+class Canvas_Spectogram(app.Canvas):
     
-    def __init__(self, smpl_all, xAxis, yAxis, scopes):
+    def __init__(self, caller, smpl_all, buffer_size, xAxis, yAxis, info):
+        app.Canvas.__init__(self, keys='interactive')
+        
+        try:
+            self.caller = caller
+            self.smpl_all = smpl_all
+            self.buffer_size = buffer_size 
+            self.xAxis= xAxis
+            self.yAxis= yAxis
+            
+            
+            self.freq = 22500
+            self.fft_window_size = info['win']
+            self.cut_freq = info['cut']
+            
+            ratio = self.cut_freq / float(self.freq)
+            self.fft_window_size_specto = ( int(self.fft_window_size * ratio) + int(self.fft_window_size * ratio) % 2 ) / 2
+            
+            self.ysl =  np.zeros((self.fft_window_size,), dtype=np.float32) 
+            self.ysl_fft = {1:None}
+
+            self.window = np.hanning(self.fft_window_size)
+                        
+            self.last_mouse_position = None
+            
+            
+            self.anzeigewerte = [b * 10**a for a in reversed(range(6)) for b in (4,2,1)]
+            self.sichtbare = [0, smpl_all - 1]
+            self.pos_line = 0
+            self.pos_markline = 0
+            
+            self.is_scope = False
+            self.display_values = 0
+            
+            benutzte_smpls = self.smpl_all / self.buffer_size
+            all_verts =  benutzte_smpls * self.fft_window_size_specto
+            farbe = np.array(np.linspace(0,0, all_verts), ndmin=2).astype(np.float32)
+
+            my_range_1 = [a * 2 * self.buffer_size  for a in range(benutzte_smpls) ]
+            index_x = np.repeat(my_range_1, self.fft_window_size_specto )
+
+            my_range = [ y for y in range(self.fft_window_size_specto) ]
+            index_y = np.tile( my_range, benutzte_smpls)  
+            
+                   
+            index = np.c_[np.fromiter(index_x, np.float32),
+                          np.fromiter(index_y, np.float32),
+                          ].astype(np.float32)
+                                                          
+             
+            self.program = gloo.Program(VERT_SHADER_SPECTOGRAM, FRAG_SHADER_SPECTOGRAM)
+            self.program['farbe'] = farbe
+            print(self.caller.specto_color_bg)
+            self.program['color_bg'] = self.caller.specto_color_bg
+            self.program['color_fg'] = self.caller.specto_color_fg
+            
+            self.program['index'] = index
+            
+            self.program['all_samples'] = smpl_all
+            
+            self.program['versatz'] = 0
+            self.program['drag_x'] = 0
+            self.program['drag_y'] = 0
+            
+            self.program['zoom_x'] = 1.
+            self.program['zoom_y'] = 1.
+            
+            self.program['adjust_y'] = 1.
+            self.program['boost'] = 1
+            
+            self.program['point_size'] = 1.
+            self.program['maximum'] = 0.
+            self.program['cut_displayed_values'] = 0.
+            
+            
+            self.drag_x = 0
+            self.drag_y = 0
+            self.zoom_y = 1
+            
+            self.xAchse, self.indices0 = self.create_line([-.1, 0], [.1, 0], (.3, .3, .3))
+            self.prg_poslinie, self.indices = self.create_line([0, -.1], [0, .1], (0, 1., 0.))
+            self.prg_marklinie, self.indices2 = self.create_line([0, -.1], [0, .1], (0, 0., 1.))
+            
+            self.setze_xAchse()
+                         
+        except Exception as e:
+            print(tb())
+            #pd()
+             
+        
+    def on_mouse_press(self, event):
+        self.last_mouse_position = event.pos
+        
+        if event.button == 3:
+            pos = float(event.pos[0]) / self.physical_size[0] 
+            self.setze_markierungslinie(pos)
+                        
+                  
+    def on_mouse_move(self, event):
+        
+        try:
+            if event.is_dragging and event.buttons == [1]:
+
+                dx =  event.pos[0] - self.last_mouse_position[0]
+                relative_dx = float(dx) / self.physical_size[0] * 2 / self.program['zoom_x'][0]
+                self.drag_x += relative_dx
+                self.program['drag_x'] = self.drag_x
+                
+                self.setze_xAchse()
+                self.setze_positionslinie()  
+                self.setze_markierungslinie()
+                
+                self.update()
+                self.last_mouse_position = event.pos
+                
+            elif event.is_dragging and event.buttons in( [1,2], [2,1] ):
+                
+                dy =  (event.pos[1] - self.last_mouse_position[1] ) 
+                relative_dy = -float(dy) / self.physical_size[1] * 2 / self.program['zoom_y'][0]
+                self.drag_y += relative_dy * self.zoom_y 
+                self.program['drag_y'] = self.drag_y
+
+                
+                relative_dy = -float(dy) / self.physical_size[1]
+                self.yAxis.drag_y -= relative_dy 
+                self.yAxis.set_scale_y()
+                self.yAxis.update()
+                
+                self.update()
+                self.last_mouse_position = event.pos
+                
+            elif event.is_dragging and event.buttons == [2]:
+                
+                dy = event.pos[1] - self.last_mouse_position[1]
+                self.zoom_y -= dy / 50. * self.zoom_y
+                self.zoom_y = max(.0000001, self.zoom_y)
+                self.program['zoom_y'] = self.zoom_y
+                
+                self.yAxis.zoom_y = self.zoom_y
+                self.yAxis.set_scale_y()
+                self.yAxis.update()
+
+                self.update()
+                self.last_mouse_position = event.pos
+                
+            elif event.is_dragging and event.buttons == [3]:
+                pos = float(event.pos[0]) / self.physical_size[0] 
+                
+                modifiers = list([m.name for m in event.modifiers])
+
+                if 'Control' in modifiers:
+                    for a in range(self.caller.amount_scopes):
+                        scope = self.caller.scopes[a]
+                        scope.pos_markline = pos
+                        scope.setze_markierungslinie(pos)
+                        scope.update()                            
+                else:
+                    self.setze_markierungslinie(pos)
+                    self.update()
+                    
+                self.last_mouse_position = event.pos
+                
+        except:
+            print(tb())
+    
+    
+    def on_mouse_wheel(self, event):
+        
+        try:
+            modifiers = list([m.name for m in event.modifiers])
+
+            if 'Control' in modifiers and 'Shift' in modifiers:
+                self.widget.setFixedHeight(self.widget.height() + event.delta[1] * 2)
+            else:
+                dx = np.sign(event.delta[1]) * .05
+                pos_im_fenster = ( event.pos[0] / float(self.physical_size[0]) )
+
+                self.setze_zoom_x(dx, pos_im_fenster)
+                self.setze_xAchse()
+                self.setze_positionslinie()   
+                self.setze_markierungslinie()        
+                
+            self.update()             
+                         
+        except Exception as e:
+            print(tb())
+    
+
+    def on_resize(self, event):
+        # Set canvas viewport and reconfigure visual transforms to match.
+        vp = (0, 0, self.physical_size[0], self.physical_size[1])
+        self.context.set_viewport(*vp)
+
+        
+    def create_line(self, pos1, pos2, color):
+         
+        try:
+            x1, y1 = pos1
+            x2, y2 = pos2
+             
+            V = np.zeros(2, [("position", np.float32, 3)])
+            V["position"] = [[ x1, y1, 0], [x2, y2, 0]] 
+                     
+            vertices = VertexBuffer(V)
+            indices = IndexBuffer([0, 1])
+             
+            program = gloo.Program(vertex_line, fragment_line)
+            program.bind(vertices)
+            model = translate((0, 0, 0))
+            program['model'] = model
+            r,g,b = color
+            program['a_color'] = (r,g,b, 1)
+             
+            return program, indices
+        except:
+            print(tb())
+             
+
+    def setze_zoom_x(self, dx, pos_im_fenster):
+         
+        # Position Wave
+        zoom_alt = self.program['zoom_x'][0]
+        zoom_neu = max(1.0, zoom_alt * math_exp(2.5 * dx))
+         
+        anzahl_sichtbare = int(self.smpl_all / zoom_neu  ) 
+        anzahl_sichtbare_alt = int(self.smpl_all / zoom_alt  )       
+        dif_sichtbare = anzahl_sichtbare_alt - anzahl_sichtbare 
+        
+        nach_links = int(dif_sichtbare * pos_im_fenster) 
+        nach_rechts = dif_sichtbare - nach_links        
+        
+        if zoom_neu == 1.0:
+            self.sichtbare[0] = 0
+            self.sichtbare[1] = self.smpl_all - 1
+            self.drag_x = 0
+            self.program['drag_x'] = 0
+        else:
+            self.sichtbare[0] += nach_links 
+            self.sichtbare[1] -= nach_rechts 
+        
+        eigentliche_pos = -1 - ( -1 + 2.0 / self.smpl_all * self.sichtbare[0] )  * zoom_neu 
+
+        self.program['versatz'] = eigentliche_pos 
+        self.program['zoom_x'] = zoom_neu 
+
+
+    def setze_positionslinie(self):
+        
+        x0, x1 = self.berechne_anfang_und_ende()
+        zoom = self.program['zoom_x']
+        versatz = self.program['versatz'][0]
+        
+        anzahl_sichtbare = int(self.smpl_all / zoom )
+        
+        if x0 <= self.pos_line <= x1:
+            pos = self.pos_line - x0 
+            pos_line_new = -1 + 2 * pos / float(anzahl_sichtbare)  
+        else:
+            # linie ausblenden
+            pos_line_new = -2
+         
+        self.prg_poslinie['model'] = translate((pos_line_new, 0, 0))  
+        
+    
+    def setze_markierungslinie(self, pos = None):
+    
+        x0, x1 = self.berechne_anfang_und_ende()
+    
+        if pos != None:
+            dif = x1 - x0
+            pos_but = runden(dif * pos) + x0
+            self.pos_markline = pos_but
+        
+        zoom = self.program['zoom_x']
+        anzahl_sichtbare = int(self.smpl_all / zoom )
+         
+        if x0 <= self.pos_markline <= x1:
+            pos = self.pos_markline - x0
+            pos_line_new = -1 + 2 * pos / float(anzahl_sichtbare)  
+        else:
+            # linie ausblenden
+            pos_line_new = -2
+        
+        self.prg_marklinie['model'] = translate((pos_line_new, 0, 0))     
+        self.update()
+        
+    
+    def boost_color(self,*ev):
+        self.program['boost'] = ev[0]**2 * .01
+        print(ev[0], ev[0]**2 * .01)
+        self.update()
+
+
+    def change_point_size(self, *ev):
+        self.program['point_size'] = ev[0]**1.2 / 100.
+        self.update()    
+        
+        
+    def cut_displayed_values(self, *ev):
+        self.program['cut_displayed_values'] = ev[0] / 100.
+        self.update()
+        
+         
+    def berechne_anfang_und_ende(self):
+        
+        drag_x = self.program['drag_x']
+        zoom = self.program['zoom_x']
+        eigentliche_pos = self.program['versatz']
+                        
+        pos0 = -1. * zoom + drag_x * zoom + eigentliche_pos  
+        pos1 = 1. * zoom + drag_x * zoom + eigentliche_pos 
+        
+        pos0 = pos0[0]
+        pos1 = pos1[0]
+
+        laenge = pos1 - pos0
+        smpl_laenge = laenge / self.smpl_all 
+        
+        if pos0 <= -1:
+            dif_links = abs(pos0 + 1)
+            dif_rechts = pos1 - 1
+        elif pos0 > -1:
+            dif_links = -( pos0 + 1 )
+            dif_rechts = pos1 - 1
+            
+        stelle_m1 = 100 / laenge * dif_links
+        stelle_p1 = 100 - (100 / laenge * dif_rechts)
+        x0 = runden(self.smpl_all * stelle_m1 / 100)
+        x1 = runden(self.smpl_all * stelle_p1 / 100)
+        
+        return x0, x1
+    
+    
+    def setze_xAchse(self):
+
+        x0, x1 = self.berechne_anfang_und_ende()
+                
+        zoom_neu = self.program['zoom_x'][0]
+        anzahl = int(self.smpl_all / zoom_neu  )
+                 
+        for w in self.anzeigewerte:
+            teiler = anzahl / w
+            if teiler > 2:
+                break
+
+        anfang = x0 / w + 1
+        reihe = list(range(anfang * w, x1, w))
+         
+        positions = []
+         
+        for s in reihe:
+            pos = s - x0
+            positions.append([s,-1 + 2 * pos / float(anzahl) ])
+     
+        self.xAxis.positions = positions  
+        self.xAxis.update()
+    
+         
+    def on_draw(self, event):
+        
+        gloo.clear(color='grey')
+        gloo.set_viewport(0, 0, *self.physical_size)
+        
+#         try:
+#             gl.glEnable(gl.GL_BLEND)
+#             gl.glEnable(GL.GL_POINT_SMOOTH)
+# #             #gl.glBlendFunc (gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+#             gl.glBlendFunc (gl.GL_SRC_ALPHA, gl. GL_ONE_MINUS_SRC_ALPHA) 
+# #             gl.glBlendFunc (gl.GL_SRC_ALPHA, gl.GL_SRC_ALPHA)
+# #              
+# #             gl.glEnable(GL.GL_POINT_SPRITE)
+# #             gl.glEnable(GL.GL_VERTEX_PROGRAM_POINT_SIZE)
+#    
+#         except Exception as e:
+#             print(e)
+        
+                
+        try:
+            vp = (0, 0, self.physical_size[0], self.physical_size[1])
+            self.context.set_viewport(*vp)
+            self.program.draw('points')
+            self.prg_poslinie.draw('lines', self.indices)
+            self.prg_marklinie.draw('lines', self.indices2)
+
+        except Exception as e:
+            print(tb())
+            #pd()
+
+
+class Canvas_Scope(app.Canvas):
+    
+    def __init__(self, caller, smpl_all, xAxis, yAxis, scopes):
         app.Canvas.__init__(self, title='Glyphs', keys='interactive')
         
         try:
+            self.caller = caller
             self.smpl_all = smpl_all
             self.xAxis= xAxis
             self.yAxis= yAxis
@@ -474,7 +1264,7 @@ class Canvas(app.Canvas):
             self.pos_line = 0
             self.pos_markline = 0
             
-            
+            self.is_scope = True
              
             # Generate the signals as a (m, n) array.
             #self.y = np.array(np.linspace(-1, 1, smpl_all - 1),ndmin=2).astype(np.float32)
@@ -487,9 +1277,10 @@ class Canvas(app.Canvas):
                           np.arange(smpl_all-1)].astype(np.float32)
      
              
-            self.program = gloo.Program(VERT_SHADER, FRAG_SHADER)
+            self.program = gloo.Program(VERT_SHADER_SCOPE, FRAG_SHADER_SCOPE)
             self.program['position'] = self.y#.reshape(-1, 1)
             self.program['index'] = index
+            self.program['color'] = self.caller.scope_color_fg
             
             self.program['all_samples'] = smpl_all
             
@@ -543,15 +1334,15 @@ class Canvas(app.Canvas):
                 
             elif event.is_dragging and event.buttons in( [1,2], [2,1] ):
                 
-                dy =  event.pos[1] - self.last_mouse_position[1]
+                dy =  event.pos[1] - self.last_mouse_position[1] 
                 relative_dy = -float(dy) / self.physical_size[1] * 2 / self.program['zoom_y'][0]
-                self.drag_y += relative_dy
+                self.drag_y += relative_dy * self.zoom_y 
                 self.program['drag_y'] = self.drag_y
 
                 model = translate((0, self.drag_y, 0))
                 self.xAchse['model'] = model
                 
-                self.yAxis.drag_y -= relative_dy / self.program['adjust_y'][0]
+                self.yAxis.drag_y -= relative_dy / self.program['adjust_y'][0] * self.zoom_y 
                 self.yAxis.set_scale_y()
                 self.yAxis.update()
                 
@@ -561,8 +1352,8 @@ class Canvas(app.Canvas):
             elif event.is_dragging and event.buttons == [2]:
                 
                 dy = event.pos[1] - self.last_mouse_position[1]
-                self.zoom_y -= dy / 50.
-                self.zoom_y = max(.01, self.zoom_y)
+                self.zoom_y -= dy / 50. #* self.zoom_y
+                self.zoom_y = max(.0000001, self.zoom_y)
                 self.program['zoom_y'] = self.zoom_y
                 
                 self.yAxis.zoom_y = self.zoom_y
@@ -574,9 +1365,19 @@ class Canvas(app.Canvas):
                 
             elif event.is_dragging and event.buttons == [3]:
                 pos = float(event.pos[0]) / self.physical_size[0] 
-                self.setze_markierungslinie(pos)
                 
-                self.update()
+                modifiers = list([m.name for m in event.modifiers])
+
+                if 'Control' in modifiers:
+                    for a in range(self.caller.amount_scopes):
+                        scope = self.caller.scopes[a]
+                        scope.pos_markline = pos
+                        scope.setze_markierungslinie(pos)
+                        scope.update()                            
+                else:
+                    self.setze_markierungslinie(pos)
+                    self.update()
+                    
                 self.last_mouse_position = event.pos
                 
         except:
@@ -616,13 +1417,18 @@ class Canvas(app.Canvas):
     def on_mouse_wheel(self, event):
         
         try:
-            dx = np.sign(event.delta[1]) * .05
-            pos_im_fenster = ( event.pos[0] / float(self.physical_size[0]) )
+            modifiers = list([m.name for m in event.modifiers])
 
-            self.setze_zoom_x(dx, pos_im_fenster)
-            self.setze_xAchse() 
-            self.setze_positionslinie()   
-            self.setze_markierungslinie()        
+            if 'Control' in modifiers and 'Shift' in modifiers:
+                self.widget.setFixedHeight(self.widget.height() + event.delta[1] * 2)
+            else:
+                dx = np.sign(event.delta[1]) * .05
+                pos_im_fenster = ( event.pos[0] / float(self.physical_size[0]) )
+    
+                self.setze_zoom_x(dx, pos_im_fenster)
+                self.setze_xAchse() 
+                self.setze_positionslinie()   
+                self.setze_markierungslinie()        
             
             self.update()             
                          
@@ -647,8 +1453,8 @@ class Canvas(app.Canvas):
             self.sichtbare[0] = 0
             self.sichtbare[1] = self.smpl_all - 1
             self.drag_x = 0
-            self.drag_y = 0
-            self.zoom_y = 1
+            #self.drag_y = 0
+            #self.zoom_y = 1
             self.program['drag_x'] = 0
         else:
             self.sichtbare[0] += nach_links 
@@ -758,7 +1564,7 @@ class Canvas(app.Canvas):
     
     def on_draw(self, event):
         
-        gloo.clear(color='black')
+        gloo.clear(color = self.caller.scope_color_bg)
         gloo.set_viewport(0, 0, *self.physical_size)
                 
         try:
@@ -772,7 +1578,7 @@ class Canvas(app.Canvas):
 
         except Exception as e:
             print(tb())
-
+            #pd()
 
 class XAxis(QtGui.QWidget):
     
@@ -812,10 +1618,67 @@ class XAxis(QtGui.QWidget):
         self.qp.end()   
                             
             
-class YAxis(QtGui.QWidget):
+class YAxis_Spectogram(QtGui.QWidget):
+    
+    def __init__(self, scope):
+        super(YAxis_Spectogram, self).__init__()
+
+        self.positions = []
+        self.specto = None
+        
+        self.anzahl_y_Werte = 9
+        
+        self.max_y = 1
+        self.min_y = -1
+        
+        self.drag_y = 0
+        self.zoom_y = 1
+        
+        self.font_size = 10.
+        
+        self.qp = QtGui.QPainter()
+        self.metrics = QtGui.QFontMetrics(QtGui.QFont('Decorative', self.font_size))
+        
+
+    def paintEvent(self, event):
+
+        self.qp.begin(self)
+        self.qp.setPen(QtGui.QColor(200,200,200))
+        self.qp.setFont(QtGui.QFont('Decorative', 10))
+        
+        r = event.rect()
+        width = r.width()
+        height = r.height()
+        
+        self.qp.drawLine(width - 1, 0, width - 1, height)
+        
+        for txt,pos in self.positions:
+            
+            txt = str(txt)
+
+            txt_height = self.metrics.height()
+            txt_width = self.metrics.width(txt)
+             
+            y = int( (1 + -pos) / 2 * height) 
+            y1 = y - int(txt_height / 2.)
+             
+            rect = QtCore.QRect(width - txt_width - 7, y1, txt_width, y1)
+            
+            self.qp.drawText(rect, QtCore.Qt.AlignLeft, txt) 
+            self.qp.drawLine(width - 5, y , width, y) 
+            
+        self.qp.end()   
+    
+    
+    def set_scale_y(self):
+        self.positions, null_pos = berechne_abstaende_y_Achse2(self.specto.fft_window_size, -self.drag_y, 
+                                                               self.zoom_y, self.specto.cut_freq)    
+
+
+class YAxis_Scope(QtGui.QWidget):
     
     def __init__(self):
-        super(YAxis, self).__init__()
+        super(YAxis_Scope, self).__init__()
 
         self.positions = []
         
@@ -868,7 +1731,7 @@ class YAxis(QtGui.QWidget):
         maxi = (self.max_y + self.drag_y) / self.zoom_y
         mini = (self.min_y + self.drag_y) / self.zoom_y
           
-        self.positions, null_pos = berechne_abstaende_y_Achse(maxi, mini)    
+        self.positions, null_pos = berechne_abstaende_y_Achse(maxi, mini)  
 
 
 def runden(x):
@@ -883,6 +1746,7 @@ def pr(locs,*args):
     print('')
     for a in args:
         print('{0}: {1}'.format(a,locs[a]))
+
 
 
 from decimal import Decimal as D  
@@ -936,9 +1800,18 @@ def berechne_abstaende_y_Achse(maxi, mini):
         positionen.append([r, rel_pos])
         if r == 0:
             null_pos = rel_pos 
-      
+    
     return positionen, null_pos
         
 
-
+def berechne_abstaende_y_Achse2(fft_window_size, drag_y, zoom_y, cut_freq ):
+    
+    freq_sichtbar = cut_freq / zoom_y
+    verschoben = freq_sichtbar * drag_y
+    
+    maxi = freq_sichtbar - verschoben
+    mini = -verschoben
+    
+    return berechne_abstaende_y_Achse(maxi, mini)
+    
 
