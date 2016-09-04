@@ -1,7 +1,7 @@
 # Pure Data Scopes
 
-pd_scopes displays waveforms and spectograms in realtime.
-Up to 4 scopes can display 4 different waveforms or spectograms.
+pd_scopes displays waveforms and spectrograms in realtime.
+Up to 4 scopes can display 4 different waveforms or spectrograms.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
@@ -21,7 +21,7 @@ Usage:
 * Wheel + Control + Shift: resize scope
 
 Buttons: 
-* adjust y: set all windows to the y-range of data button 
+* adjust y: set all windows to the y-range of data 
 * m: set all markers to selected
 * tr: transfer zoom and pos x to others 
 
