@@ -5,7 +5,7 @@ Up to 5 scopes can display 5 different waveforms or spectrograms.
 
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
-The spectrograms are still experimental and highly cpu intensive.
+The spectrograms are still highly cpu intensive.
 
 - Y-values can be adjusted automatically.
 - Waveforms might be zoomed and dragged in x and y direction.
