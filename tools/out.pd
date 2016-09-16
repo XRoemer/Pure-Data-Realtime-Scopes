@@ -1,0 +1,15 @@
+#N canvas 673 247 342 331 10;
+#X obj 179 257 dac~, f 5;
+#X obj 179 231 *~;
+#X obj 210 230 *~;
+#X obj 101 63 vsl 30 128 0 1 0 0 empty empty empty 0 -9 0 10 -262130
+-1 -1 12700 1;
+#X obj 177 69 inlet~;
+#X obj 211 89 inlet~;
+#X connect 1 0 0 0;
+#X connect 2 0 0 1;
+#X connect 3 0 1 1;
+#X connect 3 0 2 1;
+#X connect 4 0 1 0;
+#X connect 5 0 2 0;
+#X coords 0 -1 1 1 32 134 2 100 60;

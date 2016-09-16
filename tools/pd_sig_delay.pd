@@ -1,0 +1,22 @@
+#N canvas 733 449 428 185 10;
+#X obj 101 20 inlet~;
+#X obj 101 161 outlet~;
+#X msg 18 45 reload;
+#X msg 18 65 \; pd dsp \$0;
+#X msg 280 76 delay \$1;
+#X obj 280 16 inlet;
+#X obj 335 25 loadbang;
+#X obj 158 21 cnv 15 38 17 empty empty Delay 2 10 0 12 -204786 -66577
+0;
+#X obj 101 103 pyext~ 1 0 1 1 python/pd_effects Signal_Delay @detach
+2, f 26;
+#X msg 335 45 1024;
+#X connect 0 0 8 0;
+#X connect 2 0 3 0;
+#X connect 2 0 8 0;
+#X connect 4 0 8 1;
+#X connect 5 0 4 0;
+#X connect 6 0 9 0;
+#X connect 8 0 1 0;
+#X connect 9 0 4 0;
+#X coords 0 -1 1 1 42 20 2 156 19;

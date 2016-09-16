@@ -1,0 +1,20 @@
+#N canvas 2187 308 549 393 10;
+#X obj 101 101 tgl 48 0 dsp_an_aus2 empty empty 7 26 0 20 -262144 -1
+-1 0 1;
+#X msg 79 268 \; pd dsp \$1;
+#X obj 159 240 route 1 0;
+#X msg 159 317 color 16;
+#X msg 211 272 color 9;
+#X obj 211 294 s dsp_an_aus;
+#X obj 159 339 s dsp_an_aus;
+#X obj 109 168 tgl 15 0 empty dsp_an_aus2 empty 17 7 0 10 -262144 -1
+-1 0 1;
+#X obj 102 102 cnv 15 46 46 empty dsp_an_aus DSP 6 24 0 20 -257472
+-66577 0;
+#X connect 2 0 3 0;
+#X connect 2 1 4 0;
+#X connect 3 0 6 0;
+#X connect 4 0 5 0;
+#X connect 7 0 1 0;
+#X connect 7 0 2 0;
+#X coords 0 -1 1 1 50 50 2 100 100;

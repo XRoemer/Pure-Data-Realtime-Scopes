@@ -1,24 +1,157 @@
-#N canvas 793 432 637 251 10;
-#X obj 90 182 print;
-#X msg 526 102 open_scopes;
+#N canvas 348 228 1353 496 10;
+#X obj 571 120 print;
+#X msg 571 67 open_scopes;
 #X obj 91 10 inlet~;
-#X obj 190 10 inlet~;
-#X obj 289 10 inlet~;
-#X obj 388 10 inlet~;
-#X msg 10 30 reload;
-#X msg 11 52 \; pd dsp \$0;
-#X obj 91 157 pyext~ 1 0 4 0 pd_scopes Scopes, f 57;
-#X obj 490 11 inlet;
-#X obj 403 107 bng 30 250 50 0 empty empty Open 32 15 0 15 -262130
+#X obj 188 10 inlet~;
+#X obj 283 10 inlet~;
+#X obj 378 10 inlet~;
+#X msg 6 53 reload;
+#X msg 7 75 \; pd dsp \$0;
+#X obj 474 8 inlet~;
+#X obj 401 202 cnv 15 258 72 empty empty empty 20 12 0 14 -261682 -66577
+0;
+#X obj 404 206 bng 30 250 50 0 \$0-open empty Open 0 40 0 15 -262130
 -86277 -1;
-#X connect 1 0 8 4;
-#X connect 2 0 8 0;
-#X connect 3 0 8 1;
-#X connect 4 0 8 2;
-#X connect 5 0 8 3;
+#X obj 490 205 hradio 15 1 1 5 \$0-scopes empty Scopes -44 7 0 10 -262144
+-1 -1 1;
+#X obj 490 223 tgl 15 0 \$0-spectro empty Spectro -44 7 0 10 -262144
+-1 -1 0 1;
+#X obj 522 240 hsl 20 15 7 16 0 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 1200 0;
+#X obj 491 258 nbx 5 14 128 32768 0 0 \$0-fft empty FFT_Win -44 7 0
+10 -262144 -1 -1 2048 256;
+#X obj 508 280 i;
+#X obj 508 300 bang;
+#X obj 509 339 pow;
+#X msg 509 319 2;
+#X floatatom 932 234 5 0 0 1 Amount_Scopes #0-scopes2 -, f 5;
+#X floatatom 927 139 5 0 0 1 FFT_Window #0-fft -, f 5;
+#X obj 592 240 hsl 60 15 1 200 1 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 3400 0;
+#X obj 600 258 nbx 5 14 64 32768 0 1 \$0-cut empty Cut_Freq -50 7 0
+10 -262144 -1 -1 2100 256;
+#X obj 610 281 i;
+#X obj 610 301 * 100;
+#X obj 579 205 hsl 36 15 1 20 0 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 0;
+#X obj 555 223 nbx 6 14 1000 1e+006 0 0 \$0-sampl empty Samp -26 7
+0 10 -262144 -1 -1 44100 256;
+#X floatatom 927 121 5 0 0 1 Cut_Freq #0-cut -, f 5;
+#X obj 563 318 i;
+#X obj 563 338 * 44100;
+#X floatatom 927 48 6 0 0 1 Samples #0-sampl -, f 6;
+#X floatatom 930 186 5 0 0 1 Use_Spectrogram #0-spectro -, f 5;
+#X obj 1136 281 until;
+#X msg 1136 302 add2 scope;
+#X msg 1094 198 add2 spectro -win \$1 -cut \$2;
+#X obj 629 222 tgl 15 1 \$0-top empty On_Top -7 -9 0 10 -262144 -1
+-1 1 1;
+#X floatatom 928 73 5 0 0 1 On_Top #0-top -, f 5;
+#X msg 1069 77 set \$1;
+#X obj 1094 224 spigot;
+#X obj 1079 106 sel 1;
+#X msg 1079 128 add2 on_top;
+#X obj 704 38 t b b b b b b b, f 16;
+#X msg 1136 262 \$1;
+#X obj 1093 180 pack f f;
+#X obj 408 321 + 1;
+#X msg 1083 438 44100 on_top;
+#X msg 1181 386 add;
+#X obj 1145 386 bang;
+#X floatatom 407 303 5 0 0 0 - - -, f 5;
+#X obj 704 12 r \$0-open;
+#X obj 813 65 s \$0-sampl;
+#X obj 794 82 s \$0-top;
+#X obj 776 100 s \$0-spectro;
+#X obj 722 154 s \$0-finish;
+#X obj 1145 342 r \$0-finish;
+#X obj 1145 364 t b b;
+#X obj 740 136 s \$0-scopes2;
+#X obj 408 340 s \$0-scopes2;
+#X obj 1093 160 r \$0-win_cut;
+#X obj 759 118 s \$0-win_cut;
+#X obj 407 282 r \$0-scopes;
+#X obj 331 210 loadbang;
+#X msg 331 232 2048;
+#X msg 39 324 -color 0.7 0.2 0 -bg-color 0.9 0.9 0.9;
+#X msg 39 363 -scope-color 1 1 0 -scope-bg-color 1 0.8 0.8;
+#X msg 39 344 -spectro-color 0 0 0 -spectro-bg-color 1 1 1;
+#X obj 16 393 s \$0-msg;
+#X obj 542 40 r \$0-msg;
+#X obj 727 385 dsp_btn;
+#X msg 19 180 on_top 220500 scope spectro -win 4096 -cut 2000 scope
+spectro -win 4096 -cut 5000, f 10;
+#X obj 105 219 cnv 15 170 60 empty empty empty 20 12 0 14 -262130 -66577
+0;
+#X text 109 221 Scopes and Spectrograms can be arranged freely by using
+messages. See example on the left, f 24;
+#X obj 118 395 cnv 15 115 60 empty empty empty 20 12 0 14 -262130 -66577
+0;
+#X text 119 404 Colors might be changed. See messages above., f 16
+;
+#X obj 90 121 outlet~;
+#X obj 91 92 pyext~ 1 0 5 1 python/pd_scopes3 Scopes @detach 2, f
+69;
+#X connect 1 0 75 5;
+#X connect 2 0 75 0;
+#X connect 3 0 75 1;
+#X connect 4 0 75 2;
+#X connect 5 0 75 3;
 #X connect 6 0 7 0;
-#X connect 6 0 8 0;
-#X connect 8 0 0 0;
-#X connect 9 0 8 4;
-#X connect 10 0 1 0;
-#X coords 0 -1 1 1 85 60 1 400 90;
+#X connect 6 0 75 0;
+#X connect 8 0 75 4;
+#X connect 13 0 15 0;
+#X connect 15 0 16 0;
+#X connect 15 0 17 1;
+#X connect 16 0 18 0;
+#X connect 17 0 14 0;
+#X connect 18 0 17 0;
+#X connect 19 0 42 0;
+#X connect 20 0 43 0;
+#X connect 21 0 23 0;
+#X connect 23 0 24 0;
+#X connect 24 0 22 0;
+#X connect 25 0 28 0;
+#X connect 27 0 43 1;
+#X connect 28 0 29 0;
+#X connect 29 0 26 0;
+#X connect 30 0 37 0;
+#X connect 31 0 38 1;
+#X connect 32 0 33 0;
+#X connect 33 0 45 0;
+#X connect 34 0 38 0;
+#X connect 36 0 39 0;
+#X connect 37 0 45 0;
+#X connect 38 0 45 0;
+#X connect 39 0 40 0;
+#X connect 40 0 45 0;
+#X connect 41 0 1 0;
+#X connect 41 1 53 0;
+#X connect 41 2 56 0;
+#X connect 41 3 59 0;
+#X connect 41 4 52 0;
+#X connect 41 5 51 0;
+#X connect 41 6 50 0;
+#X connect 42 0 32 0;
+#X connect 43 0 34 0;
+#X connect 44 0 57 0;
+#X connect 45 0 75 5;
+#X connect 46 0 45 0;
+#X connect 47 0 45 0;
+#X connect 48 0 44 0;
+#X connect 49 0 41 0;
+#X connect 54 0 55 0;
+#X connect 55 0 47 0;
+#X connect 55 1 46 0;
+#X connect 58 0 43 0;
+#X connect 60 0 48 0;
+#X connect 61 0 62 0;
+#X connect 62 0 14 0;
+#X connect 63 0 66 0;
+#X connect 64 0 66 0;
+#X connect 65 0 66 0;
+#X connect 67 0 75 5;
+#X connect 69 0 66 0;
+#X connect 75 0 74 0;
+#X connect 75 1 0 0;
+#X coords 0 -1 1 1 260 76 2 400 200;
