@@ -3,6 +3,8 @@
 pd_scopes displays waveforms and spectrograms in realtime.
 Up to 5 scopes can display 5 different waveforms or spectrograms.
 
+![alt tag](https://github.com/XRoemer/Pure-Data-Realtime-Scopes/blob/master/images/scopes_pd.png)
+
 The scopes are calculated on the gpu (Thanks to the team of vispy!) and are running in an external thread, so fluidly working with pd is still possible.
 
 The spectrograms are still highly cpu intensive.
